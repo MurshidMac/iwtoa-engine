@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>org.flowable</groupId>
     	<artifactId>flowable-ui-task</artifactId>
-    	<version>6.5.1-SNAPSHOT</version>
+		<version>6.5.1-SNAPSHOT</version>
 	</parent>
 	<packaging>jar</packaging>
 
 	<dependencies>
-	
+
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-content-api</artifactId>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-bpmn-layout</artifactId>
-        </dependency>        
+        </dependency>
 		<dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-process-validation</artifactId>
@@ -65,7 +65,7 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
-        
+
 		<!-- JSON -->
 		<dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -106,7 +106,7 @@
 			<artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
 		</dependency>
-		
+
 		<!-- SPRING -->
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -160,12 +160,12 @@
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-web</artifactId>
 		</dependency>
-        
+
 	  	<dependency>
         	<groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-jsr223</artifactId>
        </dependency>
-	   
+
 	</dependencies>
 
 	<!-- BUILD -->
@@ -182,5 +182,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>

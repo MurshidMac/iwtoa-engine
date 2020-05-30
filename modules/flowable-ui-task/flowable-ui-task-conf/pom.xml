@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.flowable</groupId>
     	<artifactId>flowable-ui-task</artifactId>
-    	<version>6.5.1-SNAPSHOT</version>
+		<version>6.5.1-SNAPSHOT</version>
 	</parent>
 	<packaging>jar</packaging>
 
@@ -166,7 +166,7 @@
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
         </dependency>
-        
+
 		<!-- JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -207,7 +207,7 @@
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
         </dependency>
-        
+
         <!-- SPRING -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -295,5 +295,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>

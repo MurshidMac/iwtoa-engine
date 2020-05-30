@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>org.flowable</groupId>
     	<artifactId>flowable-ui-task</artifactId>
-    	<version>6.5.1-SNAPSHOT</version>
+		<version>6.5.1-SNAPSHOT</version>
 	</parent>
 	<packaging>jar</packaging>
 
 	<dependencies>
-	
+
 		<!-- Flowable -->
 		<dependency>
             <groupId>org.flowable</groupId>
@@ -29,7 +29,7 @@
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-bpmn-layout</artifactId>
-        </dependency>        
+        </dependency>
 		<dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-process-validation</artifactId>
@@ -98,7 +98,7 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
-        
+
 		<!-- JSON -->
 		<dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -146,7 +146,7 @@
 
 	<!-- BUILD -->
 	<build>
-	
+
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -158,7 +158,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
-		
+
 	</build>
-	
+
 </project>

@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>org.flowable</groupId>
     	<artifactId>flowable-ui-modeler</artifactId>
-    	<version>6.5.1-SNAPSHOT</version>
+		<version>6.5.1-SNAPSHOT</version>
 	</parent>
 	<packaging>jar</packaging>
 
 	<dependencies>
-	
+
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-ui-modeler-logic</artifactId>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-bpmn-layout</artifactId>
-        </dependency>        
+        </dependency>
 		<dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-process-validation</artifactId>
@@ -57,7 +57,7 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
-        
+
 		<!-- JSON -->
 		<dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -103,14 +103,14 @@
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
 		</dependency>
-		
+
         <!-- Servlet -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-	   
+
 	</dependencies>
 
 	<!-- BUILD -->
@@ -127,5 +127,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>

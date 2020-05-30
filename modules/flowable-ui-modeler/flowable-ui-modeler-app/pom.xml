@@ -90,7 +90,7 @@
     <!-- BUILD -->
     <build>
 
-        <finalName>flowable-modeler</finalName>
+        <finalName>iwtoa-modeler</finalName>
 
         <resources>
             <resource>
@@ -178,7 +178,7 @@
                                 <argument>--spring.datasource.url=jdbc:postgresql://localhost:5432/flowable</argument>
                                 <argument>--spring.datasource.username=flowable</argument>
                                 <argument>--spring.datasource.password=flowable</argument>
-                                <argument>--flowable.modeler.app.deployment-api-url=http://localhost:9999/flowable-task/app-api</argument>
+                                <argument>--flowable.modeler.app.deployment-api-url=http://localhost:8079/flowable-task/app-api</argument>
                                 <argument>--com.sun.management.jmxremote.port=4000</argument>
                             </arguments>
                         </configuration>
@@ -192,7 +192,7 @@
                 <dependency>
                     <groupId>mysql</groupId>
                     <artifactId>mysql-connector-java</artifactId>
-                    <scope>compile</scope>
+                    <scope>runtime</scope>
                 </dependency>
             </dependencies>
             <build>
@@ -203,7 +203,7 @@
                         <configuration>
                             <arguments>
                                 <argument>--spring.datasource.driver-class-name=com.mysql.jdbc.Driver</argument>
-                                <argument>--spring.datasource.url=jdbc:mysql://127.0.0.1:3306/flowable?characterEncoding=UTF-8&amp;serverTimezone=UTC</argument>
+                                <argument>--spring.datasource.url=jdbc:mysql://127.0.0.1:3306/demo?useSSL=false</argument>
                                 <argument>--spring.datasource.username=flowable</argument>
                                 <argument>--spring.datasource.password=flowable</argument>
                                 <argument>--flowable.modeler.app.deployment-api-url=http://localhost:9999/flowable-task/app-api</argument>
@@ -218,8 +218,9 @@
             <id>docker-deps</id>
             <dependencies>
                 <dependency>
-                    <groupId>org.postgresql</groupId>
-                    <artifactId>postgresql</artifactId>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
+                    <version>5.1.27</version>
                     <scope>compile</scope>
                 </dependency>
             </dependencies>
@@ -229,8 +230,8 @@
             <id>docker</id>
             <dependencies>
                 <dependency>
-                    <groupId>org.postgresql</groupId>
-                    <artifactId>postgresql</artifactId>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
                     <scope>compile</scope>
                 </dependency>
             </dependencies>

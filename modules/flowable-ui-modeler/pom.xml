@@ -5,7 +5,7 @@
   <name>Flowable Modeler UI</name>
   <artifactId>flowable-ui-modeler</artifactId>
   <packaging>pom</packaging>
-  
+
   <parent>
     <groupId>org.flowable</groupId>
     <artifactId>flowable-spring-boot</artifactId>

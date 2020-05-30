@@ -20,7 +20,7 @@
     </properties>
 
     <build>
-        <finalName>flowable-rest</finalName>
+        <finalName>iwtoa-rest</finalName>
 
         <plugins>
             <plugin>
@@ -510,7 +510,7 @@
                 <dependency>
                     <groupId>org.postgresql</groupId>
                     <artifactId>postgresql</artifactId>
-                    <scope>runtime</scope>
+                    <scope>compile</scope>
                 </dependency>
             </dependencies>
             <build>
@@ -541,7 +541,7 @@
                 <dependency>
                     <groupId>mysql</groupId>
                     <artifactId>mysql-connector-java</artifactId>
-                    <scope>compile</scope>
+                    <scope>runtime</scope>
                 </dependency>
             </dependencies>
             <build>
@@ -552,7 +552,7 @@
                         <configuration>
                             <arguments>
                                 <argument>--spring.datasource.driver-class-name=com.mysql.jdbc.Driver</argument>
-                                <argument>--spring.datasource.url=jdbc:mysql://127.0.0.1:3306/flowable?characterEncoding=UTF-8</argument>
+                                <argument>--spring.datasource.url=jdbc:mysql://127.0.0.1:3306/demo?useSSL=false</argument>
                                 <argument>--spring.datasource.username=flowable</argument>
                                 <argument>--spring.datasource.password=flowable</argument>
                             </arguments>
@@ -566,8 +566,8 @@
             <id>docker</id>
             <dependencies>
                 <dependency>
-                    <groupId>org.postgresql</groupId>
-                    <artifactId>postgresql</artifactId>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
                     <scope>compile</scope>
                 </dependency>
             </dependencies>
