@@ -50,7 +50,7 @@ import org.flowable.spring.boot.app.AppEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.form.FormEngineAutoConfiguration;
 import org.flowable.spring.boot.form.FormEngineServicesAutoConfiguration;
 import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
@@ -292,7 +292,6 @@ public class FormEngineAutoConfigurationTest {
 
             FormEngineConfigurationApi formEngine = context.getBean(FormEngineConfigurationApi.class);
             assertThat(formEngine).isEqualTo(formProcessConfigurationApi);
-            assertThat(formEngine).as("Form engine").isNotNull();
             assertThat(context.getBean(FormService.class)).as("Form service")
                 .isEqualTo(formEngine.getFormService());
 
@@ -336,7 +335,6 @@ public class FormEngineAutoConfigurationTest {
 
             FormEngineConfigurationApi formEngine = context.getBean(FormEngineConfigurationApi.class);
             assertThat(formEngine).isEqualTo(formProcessConfigurationApi);
-            assertThat(formEngine).as("Form engine").isNotNull();
             assertThat(context.getBean(FormService.class)).as("Form service")
                 .isEqualTo(formEngine.getFormService());
 

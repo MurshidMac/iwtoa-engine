@@ -139,7 +139,6 @@ public class CallActivityTest extends PluggableFlowableTestCase {
         entityEvent = (FlowableEntityEvent) mylistener.getEventsReceived().get(1);
         assertThat(entityEvent.getType()).isEqualTo(FlowableEngineEventType.ENTITY_CREATED);
         executionEntity = (ExecutionEntity) entityEvent.getEntity();
-        assertThat(executionEntity.getParentId()).isNotNull();
         assertThat(executionEntity.getParentId()).isEqualTo(processExecutionId);
 
         FlowableEvent flowableEvent = mylistener.getEventsReceived().get(2);
@@ -307,7 +306,6 @@ public class CallActivityTest extends PluggableFlowableTestCase {
         entityEvent = (FlowableEntityEvent) mylistener.getEventsReceived().get(1);
         assertThat(entityEvent.getType()).isEqualTo(FlowableEngineEventType.ENTITY_CREATED);
         executionEntity = (ExecutionEntity) entityEvent.getEntity();
-        assertThat(executionEntity.getParentId()).isNotNull();
         assertThat(executionEntity.getParentId()).isEqualTo(processExecutionId);
 
         FlowableEvent flowableEvent = mylistener.getEventsReceived().get(2);
@@ -430,7 +428,7 @@ public class CallActivityTest extends PluggableFlowableTestCase {
         assertThat(task.getName()).isEqualTo("User Task1 in Parent");
 
         // validate that the variable was copied back when Call Activity finished
-        assertThat("Mary Smith").isEqualTo(runtimeService.getVariable(processInstance.getId(), "Name"));
+        assertThat(runtimeService.getVariable(processInstance.getId(), "Name")).isEqualTo("Mary Smith");
 
         // complete user task so that parent process will terminate normally
         taskService.complete(task.getId());
@@ -447,7 +445,6 @@ public class CallActivityTest extends PluggableFlowableTestCase {
         entityEvent = (FlowableEntityEvent) mylistener.getEventsReceived().get(idx++);
         assertThat(entityEvent.getType()).isEqualTo(FlowableEngineEventType.ENTITY_CREATED);
         executionEntity = (ExecutionEntity) entityEvent.getEntity();
-        assertThat(executionEntity.getParentId()).isNotNull();
         assertThat(executionEntity.getParentId()).isEqualTo(processExecutionId);
 
         FlowableEvent flowableEvent = mylistener.getEventsReceived().get(idx++);
@@ -693,7 +690,7 @@ public class CallActivityTest extends PluggableFlowableTestCase {
 
         // Completing ends the process instance
         jobs.forEach(job -> managementService.executeJob(job.getId()));
-        assertThat(runtimeService.createProcessInstanceQuery().count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().count()).isZero();
     }
 
     // Same as testCallActivityAsyncComplete, but now using the real job executor instead of fetching and executing jobs manually
@@ -702,11 +699,11 @@ public class CallActivityTest extends PluggableFlowableTestCase {
             "org/flowable/engine/test/api/event/CallActivityTest.testCallActivityAsyncComplete.bpmn20.xml",
             "org/flowable/engine/test/api/event/CallActivityTest.testCallActivityAsyncComplete_subprocess.bpmn20.xml"
     })
-    @DisabledIfSystemProperty(named = "database", matches = "cockroachdb")
+    @DisabledIfSystemProperty(named = "disableWhen", matches = "cockroachdb")
     public void testCallActivityAsyncCompleteRealExecutor() {
         runtimeService.startProcessInstanceByKey("testAsyncComplete");
         waitForJobExecutorToProcessAllJobsAndExecutableTimerJobs(20000L, 200L);
-        assertThat(runtimeService.createProcessInstanceQuery().count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().count()).isZero();
     }
 
     @Test
@@ -742,7 +739,7 @@ public class CallActivityTest extends PluggableFlowableTestCase {
         Task task = taskService.createTaskQuery().singleResult();
         assertThat(task.getName()).isEqualTo("One");
 
-        // Completing the task should trigger the event subprocess. This interupts the main flow.
+        // Completing the task should trigger the event subprocess. This interrupts the main flow.
         taskService.complete(task.getId());
         Task subOneTask = taskService.createTaskQuery().taskName("sub one").singleResult();
         assertThat(subOneTask).isNotNull();

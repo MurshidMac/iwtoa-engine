@@ -13,10 +13,11 @@
 package org.flowable.dmn.engine.test.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.util.Map;
 
-import org.flowable.dmn.api.DmnRuleService;
+import org.flowable.dmn.api.DmnDecisionService;
 import org.flowable.dmn.engine.DmnEngine;
 import org.flowable.dmn.engine.test.DmnDeployment;
 import org.flowable.dmn.engine.test.FlowableDmnRule;
@@ -36,14 +37,17 @@ public class HitPolicyFirstTest {
     public void firstHitPolicy() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 11)
                 .executeWithSingleResult();
 
-        assertThat(result.get("outputVariable1")).isEqualTo("gt 10");
-        assertThat(result.get("outputVariable2")).isEqualTo("result2");
+        assertThat(result)
+                .contains(
+                        entry("outputVariable1", "gt 10"),
+                        entry("outputVariable2", "result2")
+                );
     }
 }

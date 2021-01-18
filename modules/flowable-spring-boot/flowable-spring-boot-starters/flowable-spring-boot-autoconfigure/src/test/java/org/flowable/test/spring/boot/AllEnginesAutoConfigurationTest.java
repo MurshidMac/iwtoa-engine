@@ -31,6 +31,7 @@ import org.flowable.cmmn.engine.CmmnEngine;
 import org.flowable.cmmn.spring.SpringCmmnEngineConfiguration;
 import org.flowable.cmmn.spring.SpringCmmnExpressionManager;
 import org.flowable.cmmn.spring.configurator.SpringCmmnEngineConfigurator;
+import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.cfg.SpringBeanFactoryProxyMap;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.content.engine.ContentEngine;
@@ -74,7 +75,7 @@ import org.flowable.spring.boot.idm.IdmEngineAutoConfiguration;
 import org.flowable.spring.boot.idm.IdmEngineServicesAutoConfiguration;
 import org.flowable.task.api.Task;
 import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
@@ -150,13 +151,21 @@ public class AllEnginesAutoConfigurationTest {
                     .as("AppEngine configurations")
                     .containsOnly(
                             entry(EngineConfigurationConstants.KEY_APP_ENGINE_CONFIG, appEngineConfiguration),
+                            entry(ScopeTypes.APP, appEngineConfiguration),
                             entry(EngineConfigurationConstants.KEY_CMMN_ENGINE_CONFIG, cmmnEngineConfiguration),
+                            entry(ScopeTypes.CMMN, cmmnEngineConfiguration),
                             entry(EngineConfigurationConstants.KEY_DMN_ENGINE_CONFIG, dmnEngineConfiguration),
+                            entry(ScopeTypes.DMN, dmnEngineConfiguration),
                             entry(EngineConfigurationConstants.KEY_CONTENT_ENGINE_CONFIG, contentEngineConfiguration),
+                            entry("content", contentEngineConfiguration),
                             entry(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG, formEngineConfiguration),
+                            entry(ScopeTypes.FORM, formEngineConfiguration),
                             entry(EngineConfigurationConstants.KEY_IDM_ENGINE_CONFIG, idmEngineConfiguration),
+                            entry("idm", idmEngineConfiguration),
                             entry(EngineConfigurationConstants.KEY_EVENT_REGISTRY_CONFIG, eventEngineConfiguration),
-                            entry(EngineConfigurationConstants.KEY_PROCESS_ENGINE_CONFIG, processEngineConfiguration)
+                            entry(ScopeTypes.EVENT_REGISTRY, eventEngineConfiguration),
+                            entry(EngineConfigurationConstants.KEY_PROCESS_ENGINE_CONFIG, processEngineConfiguration),
+                            entry(ScopeTypes.BPMN, processEngineConfiguration)
                     )
                     .containsAllEntriesOf(cmmnEngineConfiguration.getEngineConfigurations())
                     .containsAllEntriesOf(dmnEngineConfiguration.getEngineConfigurations())
@@ -204,6 +213,14 @@ public class AllEnginesAutoConfigurationTest {
             assertThat(formEngineConfiguration.getExpressionManager()).isInstanceOf(SpringFormExpressionManager.class);
             assertThat(formEngineConfiguration.getExpressionManager().getBeans()).isInstanceOf(SpringBeanFactoryProxyMap.class);
 
+            assertThat(cmmnEngineConfiguration.isDisableEventRegistry()).isTrue();
+            assertThat(cmmnEngineConfiguration.getEventRegistryConfigurator()).isNull();
+            assertThat(processEngineConfiguration.isDisableEventRegistry()).isTrue();
+            assertThat(processEngineConfiguration.getEventRegistryConfigurator()).isNull();
+            assertThat(appEngineConfiguration.getEventRegistryConfigurator())
+                    .as("AppEngineConfiguration eventEngineConfiguration")
+                    .isSameAs(eventConfigurator);
+
             deleteDeployments(context.getBean(AppEngine.class));
             deleteDeployments(context.getBean(CmmnEngine.class));
             deleteDeployments(context.getBean(DmnEngine.class));
@@ -225,8 +242,8 @@ public class AllEnginesAutoConfigurationTest {
             TaskService taskService = processEngineConfiguration.getTaskService();
 
             CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder().caseDefinitionKey("myCase").start();
-            assertThat(cmmnHistoryService.createHistoricMilestoneInstanceQuery().count()).isEqualTo(0);
-            assertThat(runtimeService.createProcessInstanceQuery().count()).isEqualTo(0);
+            assertThat(cmmnHistoryService.createHistoricMilestoneInstanceQuery().count()).isZero();
+            assertThat(runtimeService.createProcessInstanceQuery().count()).isZero();
 
             List<PlanItemInstance> planItemInstances = cmmnRuntimeService.createPlanItemInstanceQuery()
                     .caseInstanceId(caseInstance.getId())
@@ -243,8 +260,8 @@ public class AllEnginesAutoConfigurationTest {
             taskService.complete(tasks.get(0).getId());
             taskService.complete(tasks.get(1).getId());
 
-            assertThat(taskService.createTaskQuery().count()).isEqualTo(0);
-            assertThat(runtimeService.createProcessInstanceQuery().count()).isEqualTo(0);
+            assertThat(taskService.createTaskQuery().count()).isZero();
+            assertThat(runtimeService.createProcessInstanceQuery().count()).isZero();
 
             planItemInstances = cmmnRuntimeService.createPlanItemInstanceQuery()
                     .caseInstanceId(caseInstance.getId())

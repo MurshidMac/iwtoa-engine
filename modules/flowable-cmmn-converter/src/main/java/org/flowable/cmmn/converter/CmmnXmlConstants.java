@@ -75,6 +75,7 @@ public interface CmmnXmlConstants {
     String ELEMENT_EXTENSION_ELEMENTS = "extensionElements";
     String ELEMENT_HTTP_RESPONSE_HANDLER = "httpResponseHandler";
     String ELEMENT_HTTP_REQUEST_HANDLER = "httpRequestHandler";
+    String ATTRIBUTE_HTTP_PARALLEL_IN_SAME_TRANSACTION = "parallelInSameTransaction";
 
     String ATTRIBUTE_TRIGGER_MODE = "triggerMode";
     String ATTRIBUTE_EXIT_EVENT_TYPE = "exitEventType";
@@ -176,6 +177,7 @@ public interface CmmnXmlConstants {
     String ATTRIBUTE_FORM_FIELD_VALIDATION = "formFieldValidation";
     String ATTRIBUTE_DUE_DATE = "dueDate";
     String ATTRIBUTE_CATEGORY = "category";
+    String ATTRIBUTE_TASK_ID_VARIABLE_NAME = "taskIdVariableName";
 
     String ATTRIBUTE_REPETITION_COUNTER_VARIABLE_NAME = "counterVariable";
     String ATTRIBUTE_REPETITION_MAX_INSTANCE_COUNT_NAME = "maxInstanceCount";
@@ -195,6 +197,11 @@ public interface CmmnXmlConstants {
     String ELEMENT_EVENT_OUT_PARAMETER = "eventOutParameter";
     String START_EVENT_CORRELATION_CONFIGURATION = "startEventCorrelationConfiguration";
     String START_EVENT_CORRELATION_STORE_AS_UNIQUE_REFERENCE_ID = "storeAsUniqueReferenceId";
+
+    String ELEMENT_VARIABLE_AGGREGATION = "variableAggregation";
+    String ATTRIBUTE_VARIABLE_AGGREGATION_VARIABLE = "variable";
+    String ATTRIBUTE_VARIABLE_AGGREGATION_STORE_AS_TRANSIENT_VARIABLE = "storeAsTransientVariable";
+    String ATTRIBUTE_VARIABLE_AGGREGATION_CREATE_OVERVIEW = "createOverviewVariable";
 
     String ELEMENT_DI_CMMN = "CMMNDI";
     String ELEMENT_DI_DIAGRAM = "CMMNDiagram";

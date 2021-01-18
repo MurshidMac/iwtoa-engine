@@ -86,7 +86,7 @@ public class TimerJobQueryTest extends PluggableFlowableTestCase {
 
     @Test
     public void testByExecutable() {
-        assertThat(managementService.createTimerJobQuery().executable().count()).isEqualTo(0);
+        assertThat(managementService.createTimerJobQuery().executable().count()).isZero();
         assertThat(managementService.createTimerJobQuery().executable().list()).isEmpty();
         processEngineConfiguration.getClock().setCurrentTime(new Date(testStartTime.getTime() + (5 * 60 * 1000 * 1000)));
         assertThat(managementService.createTimerJobQuery().executable().count()).isEqualTo(3);
@@ -97,22 +97,23 @@ public class TimerJobQueryTest extends PluggableFlowableTestCase {
     public void testByHandlerType() {
         assertThat(managementService.createTimerJobQuery().handlerType(TriggerTimerEventJobHandler.TYPE).count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().handlerType(TriggerTimerEventJobHandler.TYPE).list()).hasSize(3);
-        assertThat(managementService.createTimerJobQuery().handlerType("invalid").count()).isEqualTo(0);
+        assertThat(managementService.createTimerJobQuery().handlerType("invalid").count()).isZero();
     }
 
     @Test
     public void testByJobType() {
         assertThat(managementService.createTimerJobQuery().timers().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().timers().list()).hasSize(3);
-        assertThat(managementService.createTimerJobQuery().messages().count()).isEqualTo(0);
+        assertThat(managementService.createTimerJobQuery().messages().count()).isZero();
         assertThat(managementService.createTimerJobQuery().messages().list()).isEmpty();
 
         // Executing the async job throws an exception -> job retry + creation of timer
         Job asyncJob = managementService.createJobQuery().singleResult();
         assertThat(asyncJob).isNotNull();
-        assertThatThrownBy(() -> managementService.executeJob(asyncJob.getId()));
+        assertThatThrownBy(() -> managementService.executeJob(asyncJob.getId()))
+                .isInstanceOf(Exception.class);
 
-        assertThat(managementService.createJobQuery().count()).isEqualTo(0);
+        assertThat(managementService.createJobQuery().count()).isZero();
         assertThat(managementService.createTimerJobQuery().timers().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().timers().list()).hasSize(3);
         assertThat(managementService.createTimerJobQuery().messages().count()).isEqualTo(1);
@@ -131,7 +132,7 @@ public class TimerJobQueryTest extends PluggableFlowableTestCase {
 
     @Test
     public void testByDuedateHigherThan() {
-        assertThat(managementService.createTimerJobQuery().timers().duedateLowerThan(testStartTime).count()).isEqualTo(0);
+        assertThat(managementService.createTimerJobQuery().timers().duedateLowerThan(testStartTime).count()).isZero();
         assertThat(managementService.createTimerJobQuery().timers().duedateLowerThan(testStartTime).list()).isEmpty();
     }
 
@@ -151,7 +152,7 @@ public class TimerJobQueryTest extends PluggableFlowableTestCase {
     public void testByInvalidCorrelationId() {
         assertThat(managementService.createTimerJobQuery().correlationId("invalid").singleResult()).isNull();
         assertThat(managementService.createTimerJobQuery().correlationId("invalid").list()).isEmpty();
-        assertThat(managementService.createTimerJobQuery().correlationId("invalid").count()).isEqualTo(0);
+        assertThat(managementService.createTimerJobQuery().correlationId("invalid").count()).isZero();
     }
 
 }

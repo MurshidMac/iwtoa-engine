@@ -38,7 +38,7 @@ import org.flowable.common.rest.variable.LongRestVariableConverter;
 import org.flowable.common.rest.variable.RestVariableConverter;
 import org.flowable.common.rest.variable.ShortRestVariableConverter;
 import org.flowable.common.rest.variable.StringRestVariableConverter;
-import org.flowable.dmn.api.DmnDecisionTable;
+import org.flowable.dmn.api.DmnDecision;
 import org.flowable.engine.form.FormData;
 import org.flowable.engine.form.FormProperty;
 import org.flowable.engine.form.StartFormData;
@@ -63,6 +63,7 @@ import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.identitylink.api.history.HistoricIdentityLink;
 import org.flowable.idm.api.Group;
 import org.flowable.idm.api.User;
+import org.flowable.job.api.HistoryJob;
 import org.flowable.job.api.Job;
 import org.flowable.rest.service.api.engine.AttachmentResponse;
 import org.flowable.rest.service.api.engine.CommentResponse;
@@ -87,9 +88,10 @@ import org.flowable.rest.service.api.identity.UserInfoResponse;
 import org.flowable.rest.service.api.identity.UserResponse;
 import org.flowable.rest.service.api.management.BatchPartResponse;
 import org.flowable.rest.service.api.management.BatchResponse;
+import org.flowable.rest.service.api.management.HistoryJobResponse;
 import org.flowable.rest.service.api.management.JobResponse;
 import org.flowable.rest.service.api.management.TableResponse;
-import org.flowable.rest.service.api.repository.DecisionTableResponse;
+import org.flowable.rest.service.api.repository.DecisionResponse;
 import org.flowable.rest.service.api.repository.DeploymentResourceResponse;
 import org.flowable.rest.service.api.repository.DeploymentResponse;
 import org.flowable.rest.service.api.repository.FormDefinitionResponse;
@@ -624,6 +626,7 @@ public class RestResponseFactory {
         result.setCallbackType(processInstance.getCallbackType());
         result.setReferenceId(processInstance.getReferenceId());
         result.setReferenceType(processInstance.getReferenceType());
+        result.setPropagatedStageInstanceId(processInstance.getPropagatedStageInstanceId());
         result.setTenantId(processInstance.getTenantId());
 
         if (processInstance.isEnded()) {
@@ -762,6 +765,7 @@ public class RestResponseFactory {
         result.setCallbackType(processInstance.getCallbackType());
         result.setReferenceId(processInstance.getReferenceId());
         result.setReferenceType(processInstance.getReferenceType());
+        result.setPropagatedStageInstanceId(processInstance.getPropagatedStageInstanceId());
         result.setTenantId(processInstance.getTenantId());
         return result;
     }
@@ -799,6 +803,7 @@ public class RestResponseFactory {
         result.setScopeDefinitionId(taskInstance.getScopeDefinitionId());
         result.setScopeId(taskInstance.getScopeId());
         result.setScopeType(taskInstance.getScopeType());
+        result.setPropagatedStageInstanceId(taskInstance.getPropagatedStageInstanceId());
         result.setTenantId(taskInstance.getTenantId());
         result.setCategory(taskInstance.getCategory());
         if (taskInstance.getProcessDefinitionId() != null) {
@@ -1049,6 +1054,36 @@ public class RestResponseFactory {
 
         return response;
     }
+
+    public List<HistoryJobResponse> createHistoryJobResponseList(List<HistoryJob> jobs) {
+        RestUrlBuilder urlBuilder = createUrlBuilder();
+        List<HistoryJobResponse> responseList = new ArrayList<>(jobs.size());
+        for (HistoryJob job : jobs) {
+            responseList.add(createHistoryJobResponse(job, urlBuilder));
+        }
+        return responseList;
+    }
+
+    public HistoryJobResponse createHistoryJobResponse(HistoryJob job) {
+        return createHistoryJobResponse(job, createUrlBuilder());
+    }
+
+    public HistoryJobResponse createHistoryJobResponse(HistoryJob job, RestUrlBuilder urlBuilder) {
+        HistoryJobResponse response = new HistoryJobResponse();
+        response.setId(job.getId());
+        response.setExceptionMessage(job.getExceptionMessage());
+        response.setRetries(job.getRetries());
+        response.setCreateTime(job.getCreateTime());
+        response.setScopeType(job.getScopeType());
+        response.setJobHandlerType(job.getJobHandlerType());
+        response.setJobHandlerConfiguration(job.getJobHandlerConfiguration());
+        response.setCustomValues(job.getCustomValues());
+        response.setTenantId(job.getTenantId());
+
+        response.setUrl(urlBuilder.buildUrl(RestUrls.URL_HISTORY_JOB, job.getId()));
+
+        return response;
+    }
     
     public List<BatchResponse> createBatchResponse(List<Batch> batches) {
         RestUrlBuilder urlBuilder = createUrlBuilder();
@@ -1296,24 +1331,24 @@ public class RestResponseFactory {
         return response;
     }
 
-    public List<DecisionTableResponse> createDecisionTableResponseList(List<DmnDecisionTable> decisionTables, String processDefinitionId) {
+    public List<DecisionResponse> createDecisionResponseList(List<DmnDecision> decisions, String processDefinitionId) {
         RestUrlBuilder urlBuilder = createUrlBuilder();
-        List<DecisionTableResponse> responseList = new ArrayList<>(decisionTables.size());
-        for (DmnDecisionTable decisionTable : decisionTables) {
-            responseList.add(createDecisionTableResponse(decisionTable, processDefinitionId, urlBuilder));
+        List<DecisionResponse> responseList = new ArrayList<>(decisions.size());
+        for (DmnDecision decision : decisions) {
+            responseList.add(createDecisionResponse(decision, processDefinitionId, urlBuilder));
         }
         return responseList;
     }
 
-    public DecisionTableResponse createDecisionTableResponse(DmnDecisionTable decisionTable, String processDefinitionId) {
-        return createDecisionTableResponse(decisionTable, processDefinitionId, createUrlBuilder());
+    public DecisionResponse createDecisionResponse(DmnDecision decision, String processDefinitionId) {
+        return createDecisionResponse(decision, processDefinitionId, createUrlBuilder());
     }
 
-    public DecisionTableResponse createDecisionTableResponse(DmnDecisionTable decisionTable, String processDefinitionId, RestUrlBuilder urlBuilder) {
-        DecisionTableResponse decisionTableResponse = new DecisionTableResponse(decisionTable);
-        decisionTableResponse.setUrl(urlBuilder.buildUrl(RestUrls.URL_PROCESS_DEFINITION_DECISION_TABLES_COLLECTION, processDefinitionId));
+    public DecisionResponse createDecisionResponse(DmnDecision decision, String processDefinitionId, RestUrlBuilder urlBuilder) {
+        DecisionResponse decisionResponse = new DecisionResponse(decision);
+        decisionResponse.setUrl(urlBuilder.buildUrl(RestUrls.URL_PROCESS_DEFINITION_DECISION_COLLECTION, processDefinitionId));
 
-        return decisionTableResponse;
+        return decisionResponse;
     }
 
     public List<FormDefinitionResponse> createFormDefinitionResponseList(List<FormDefinition> formDefinitions, String processDefinitionId) {

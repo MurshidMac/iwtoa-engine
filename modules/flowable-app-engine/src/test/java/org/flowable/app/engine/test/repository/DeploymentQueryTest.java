@@ -77,8 +77,8 @@ public class DeploymentQueryTest extends FlowableAppTestCase {
     @Test
     public void testQueryByInvalidDeploymentId() {
         assertThat(appRepositoryService.createDeploymentQuery().deploymentId("invalid").singleResult()).isNull();
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentId("invalid").list()).hasSize(0);
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentId("invalid").count()).isEqualTo(0);
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentId("invalid").list()).isEmpty();
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentId("invalid").count()).isZero();
     }
     
     @Test
@@ -92,8 +92,8 @@ public class DeploymentQueryTest extends FlowableAppTestCase {
     @Test
     public void testQueryByInvalidDeploymentName() {
         assertThat(appRepositoryService.createDeploymentQuery().deploymentName("invalid").singleResult()).isNull();
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentName("invalid").list()).hasSize(0);
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentName("invalid").count()).isEqualTo(0);
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentName("invalid").list()).isEmpty();
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentName("invalid").count()).isZero();
     }
     
     @Test
@@ -104,8 +104,8 @@ public class DeploymentQueryTest extends FlowableAppTestCase {
         assertThat(appRepositoryService.createDeploymentQuery().deploymentNameLike("test%").count()).isEqualTo(1);
         
         assertThat(appRepositoryService.createDeploymentQuery().deploymentNameLike("inval%").singleResult()).isNull();
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentNameLike("inval%").list()).hasSize(0);
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentNameLike("inval%").count()).isEqualTo(0);
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentNameLike("inval%").list()).isEmpty();
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentNameLike("inval%").count()).isZero();
     }
     
     @Test
@@ -119,8 +119,8 @@ public class DeploymentQueryTest extends FlowableAppTestCase {
     @Test
     public void testQueryByInvalidDeploymentCategory() {
         assertThat(appRepositoryService.createDeploymentQuery().deploymentCategory("invalid").singleResult()).isNull();
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentCategory("invalid").list()).hasSize(0);
-        assertThat(appRepositoryService.createDeploymentQuery().deploymentCategory("invalid").count()).isEqualTo(0);
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentCategory("invalid").list()).isEmpty();
+        assertThat(appRepositoryService.createDeploymentQuery().deploymentCategory("invalid").count()).isZero();
     }
     
     @Test
@@ -147,10 +147,10 @@ public class DeploymentQueryTest extends FlowableAppTestCase {
         assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentId().desc().list()).hasSize(2);
         assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentId().desc().count()).isEqualTo(2);
         
-        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymenTime().asc().list()).hasSize(2);
-        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymenTime().asc().count()).isEqualTo(2);
-        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymenTime().desc().list()).hasSize(2);
-        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymenTime().desc().count()).isEqualTo(2);
+        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentTime().asc().list()).hasSize(2);
+        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentTime().asc().count()).isEqualTo(2);
+        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentTime().desc().list()).hasSize(2);
+        assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentTime().desc().count()).isEqualTo(2);
         
         assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentName().asc().list()).hasSize(2);
         assertThat(appRepositoryService.createDeploymentQuery().orderByDeploymentName().asc().count()).isEqualTo(2);

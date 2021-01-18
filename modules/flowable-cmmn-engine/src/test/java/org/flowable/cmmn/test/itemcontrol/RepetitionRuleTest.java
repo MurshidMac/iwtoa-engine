@@ -13,7 +13,9 @@
 package org.flowable.cmmn.test.itemcontrol;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -151,7 +153,7 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         assertThat(planItemInstance.getState()).isEqualTo(PlanItemInstanceState.AVAILABLE);
 
         // Task should not be created yet
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
         // And one for the timer event listener
         planItemInstance = cmmnRuntimeService.createPlanItemInstanceQuery().planItemDefinitionType(PlanItemDefinitionType.TIMER_EVENT_LISTENER).singleResult();
@@ -166,9 +168,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         setClockTo(currentTime);
         job = cmmnManagementService.moveTimerToExecutableJob(job.getId());
         cmmnManagementService.executeJob(job.getId());
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
 
-        // A plan item in state 'waiting for repetition' should exist for the yask
+        // A plan item in state 'waiting for repetition' should exist for the task
         planItemInstance = cmmnRuntimeService.createPlanItemInstanceQuery()
                 .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK)
                 .planItemInstanceStateWaitingForRepetition()
@@ -189,9 +191,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         for (Task task : cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).list()) {
             cmmnTaskService.complete(task.getId());
         }
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
-        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(1L);
+        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(1);
         // There should also still be a plan item instance in the 'wait for repetition' state
         assertThat(cmmnRuntimeService.createPlanItemInstanceQuery()
                 .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK)
@@ -200,9 +202,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
 
         // Terminating the case instance should remove the timer
         cmmnRuntimeService.terminateCaseInstance(caseInstance.getId());
-        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
-        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(0L);
-        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
+        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isZero();
+        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
         cmmnEngineConfiguration.resetClock();
     }
     
@@ -213,7 +215,7 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder().caseDefinitionKey("testRepeatingTimer").start();
 
         // Task should not be created yet
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
         // Should have a timer job available
         Job job = cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).singleResult();
@@ -225,9 +227,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         setClockTo(currentTime);
         job = cmmnManagementService.moveTimerToExecutableJob(job.getId());
         cmmnManagementService.executeJob(job.getId());
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
 
-        // A plan item in state 'waiting for repetition' should exist for the yask
+        // A plan item in state 'waiting for repetition' should exist for the task
         PlanItemInstance planItemInstance = cmmnRuntimeService.createPlanItemInstanceQuery()
                 .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK)
                 .planItemInstanceStateWaitingForRepetition()
@@ -249,9 +251,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         for (Task task : cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).list()) {
             cmmnTaskService.complete(task.getId());
         }
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
-        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(1L);
+        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(1);
         // There should also still be a plan item instance in the 'wait for repetition' state
         assertThat(cmmnRuntimeService.createPlanItemInstanceQuery()
                 .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK)
@@ -260,9 +262,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
 
         // Terminating the case instance should remove the timer
         cmmnRuntimeService.terminateCaseInstance(caseInstance.getId());
-        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
-        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(0L);
-        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
+        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isZero();
+        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
         cmmnEngineConfiguration.resetClock();
     }
     
@@ -276,7 +278,7 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
                 .start();
 
         // Task should not be created yet
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
         // Should have a timer job available
         Job job = cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).singleResult();
@@ -288,9 +290,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         setClockTo(currentTime);
         job = cmmnManagementService.moveTimerToExecutableJob(job.getId());
         cmmnManagementService.executeJob(job.getId());
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
 
-        // A plan item in state 'waiting for repetition' should exist for the yask
+        // A plan item in state 'waiting for repetition' should exist for the task
         PlanItemInstance planItemInstance = cmmnRuntimeService.createPlanItemInstanceQuery()
                 .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK)
                 .planItemInstanceStateWaitingForRepetition()
@@ -312,9 +314,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         for (Task task : cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).list()) {
             cmmnTaskService.complete(task.getId());
         }
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
-        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(1L);
+        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(1);
         // There should also still be a plan item instance in the 'wait for repetition' state
         assertThat(cmmnRuntimeService.createPlanItemInstanceQuery()
                 .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK)
@@ -323,9 +325,9 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
 
         // Terminating the case instance should remove the timer
         cmmnRuntimeService.terminateCaseInstance(caseInstance.getId());
-        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
-        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isEqualTo(0L);
-        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
+        assertThat(cmmnRuntimeService.createCaseInstanceQuery().count()).isZero();
+        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
         cmmnEngineConfiguration.resetClock();
     }
 
@@ -365,15 +367,15 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
 
         // new timer should be scheduled
-        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1L);
+        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
 
         // Should only repeat two times
         currentTime = new Date(currentTime.getTime() + (5 * 60 * 60 * 1000) + 10000);
         setClockTo(currentTime);
         CmmnJobTestHelper.waitForJobExecutorToProcessAllJobs(cmmnEngineConfiguration, 10000L, 100L, true);
 
-        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
-        assertThat(cmmnManagementService.createJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
+        assertThat(cmmnManagementService.createJobQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
         assertThat(cmmnRuntimeService.createPlanItemInstanceQuery()
                 .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK)
@@ -381,7 +383,7 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
                 .singleResult()).isNotNull();
 
         List<Task> tasks = cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).list();
-        assertThat(tasks.size()).isEqualTo(2);
+        assertThat(tasks).hasSize(2);
         for (Task task : tasks) {
             cmmnTaskService.complete(task.getId());
         }
@@ -408,13 +410,12 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
 
         // new timer should NOT be scheduled. The orphan detection algorithm will take in account the waiting for repetition state and the fact its missing here
-        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
-        assertThat(cmmnManagementService.createTimerJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
-        assertThat(cmmnManagementService.createJobQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(0L);
+        assertThat(cmmnManagementService.createJobQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
 
         // Ignoring second occur event
-        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1L);
+        assertThat(cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
     }
 
     @Test
@@ -443,7 +444,7 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
     @CmmnDeployment
     public void testRepeatingEventListener() {
         CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder().caseDefinitionKey("testRepeatingUserEventListener").start();
-        assertThat(cmmnTaskService.createTaskQuery().count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().count()).isZero();
 
         for (int i = 0; i < 17; i++) {
             GenericEventListenerInstance genericEventListenerInstance = cmmnRuntimeService.createGenericEventListenerInstanceQuery()
@@ -461,7 +462,7 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
                 .caseDefinitionKey("testRepeatingUserEventListener")
                 .variable("keepGoing", true)
                 .start();
-        assertThat(cmmnTaskService.createTaskQuery().count()).isEqualTo(0L);
+        assertThat(cmmnTaskService.createTaskQuery().count()).isZero();
 
         for (int i = 0; i < 3; i++) {
             UserEventListenerInstance userEventListenerInstance = cmmnRuntimeService.createUserEventListenerInstanceQuery()
@@ -475,6 +476,88 @@ public class RepetitionRuleTest extends FlowableCmmnTestCase {
         }
 
         assertThat(cmmnTaskService.createTaskQuery().count()).isEqualTo(3);
+    }
+
+    @Test
+    @CmmnDeployment
+    public void testPlanItemLocalVariablesWithCollection() {
+        CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
+                .caseDefinitionKey("repeatingTask")
+                .transientVariable("myCollection", Arrays.asList("one", "two", "three"))
+                .start();
+
+        List<Task> tasks = cmmnTaskService.createTaskQuery()
+                .orderByTaskPriority().asc()
+                .list();
+
+        assertThat(tasks).hasSize(3);
+
+        assertThat(cmmnTaskService.getVariables(tasks.get(0).getId()))
+                .containsOnly(
+                        entry("repetitionCounter", 1),
+                        entry("item", "one"),
+                        entry("itemIndex", 0),
+                        entry("initiator", null)
+                );
+
+        assertThat(cmmnTaskService.getVariables(tasks.get(1).getId()))
+                .containsOnly(
+                        entry("repetitionCounter", 2),
+                        entry("item", "two"),
+                        entry("itemIndex", 1),
+                        entry("initiator", null)
+                );
+
+        assertThat(cmmnTaskService.getVariables(tasks.get(2).getId()))
+                .containsOnly(
+                        entry("repetitionCounter", 3),
+                        entry("item", "three"),
+                        entry("itemIndex", 2),
+                        entry("initiator", null)
+                );
+    }
+
+    @Test
+    @CmmnDeployment
+    public void testPlanItemLocalVariables() {
+        CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
+                .caseDefinitionKey("repeatingTask")
+                .start();
+
+        Task task = cmmnTaskService.createTaskQuery().singleResult();
+        assertThat(task).isNotNull();
+
+        assertThat(cmmnTaskService.getVariables(task.getId()))
+                .containsOnly(
+                        entry("repetitionCounter", 1),
+                        entry("initiator", null)
+                );
+
+        cmmnTaskService.complete(task.getId());
+
+        task = cmmnTaskService.createTaskQuery().singleResult();
+        assertThat(task).isNotNull();
+
+        assertThat(cmmnTaskService.getVariables(task.getId()))
+                .containsOnly(
+                        entry("repetitionCounter", 2),
+                        entry("initiator", null)
+                );
+
+        cmmnTaskService.complete(task.getId());
+
+        task = cmmnTaskService.createTaskQuery().singleResult();
+        assertThat(task).isNotNull();
+
+        assertThat(cmmnTaskService.getVariables(task.getId()))
+                .containsOnly(
+                        entry("repetitionCounter", 3),
+                        entry("initiator", null)
+                );
+
+        cmmnTaskService.complete(task.getId());
+
+        assertCaseInstanceEnded(caseInstance);
     }
 
 }

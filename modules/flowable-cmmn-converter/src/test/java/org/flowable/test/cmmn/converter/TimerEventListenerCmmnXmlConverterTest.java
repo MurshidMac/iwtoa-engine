@@ -21,19 +21,15 @@ import org.flowable.cmmn.model.CmmnModel;
 import org.flowable.cmmn.model.HumanTask;
 import org.flowable.cmmn.model.PlanItemTransition;
 import org.flowable.cmmn.model.TimerEventListener;
-import org.junit.Test;
+import org.flowable.test.cmmn.converter.util.CmmnXmlConverterTest;
 
 /**
  * @author Joram Barrez
  */
-public class TimerEventListenerCmmnXmlConverterTest extends AbstractConverterTest {
+public class TimerEventListenerCmmnXmlConverterTest {
 
-    /**
-     * @throws Exception
-     */
-    @Test
-    public void testConvertXmlToCmmnModel() throws Exception {
-        CmmnModel cmmnModel = readXMLFile("org/flowable/test/cmmn/converter/timer-event-listener.cmmn");
+    @CmmnXmlConverterTest("org/flowable/test/cmmn/converter/timer-event-listener.cmmn")
+    public void validateModel(CmmnModel cmmnModel)  {
         assertThat(cmmnModel).isNotNull();
 
         List<HumanTask> humanTasks = cmmnModel.getPrimaryCase().getPlanModel().findPlanItemDefinitionsOfType(HumanTask.class, true);
@@ -41,9 +37,10 @@ public class TimerEventListenerCmmnXmlConverterTest extends AbstractConverterTes
 
         List<TimerEventListener> timerEventListeners = cmmnModel.getPrimaryCase().getPlanModel().findPlanItemDefinitionsOfType(TimerEventListener.class, true);
         assertThat(timerEventListeners)
-                .extracting(TimerEventListener::getTimerExpression, TimerEventListener::getTimerStartTriggerStandardEvent)
-                .containsExactly(tuple("PT6H", PlanItemTransition.COMPLETE));
-        assertThat(timerEventListeners.get(0).getTimerStartTriggerPlanItem().getName()).isEqualTo("A");
+                .extracting(TimerEventListener::getTimerExpression,
+                        TimerEventListener::getTimerStartTriggerStandardEvent,
+                        timerEventListener -> timerEventListener.getTimerStartTriggerPlanItem().getName())
+                .containsExactly(tuple("PT6H", PlanItemTransition.COMPLETE, "A"));
     }
 
 }

@@ -13,12 +13,13 @@
 
 package org.flowable.engine.impl.bpmn.behavior;
 
+import static org.flowable.engine.impl.bpmn.helper.DynamicPropertyUtil.getActiveValue;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.CallActivity;
 import org.flowable.bpmn.model.FlowElement;
@@ -55,7 +56,7 @@ import org.flowable.engine.repository.ProcessDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.flowable.engine.impl.bpmn.helper.DynamicPropertyUtil.getActiveValue;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Implementation of the BPMN 2.0 call activity (limited currently to calling a subprocess and not (yet) a global task).
@@ -136,14 +137,15 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
             processEngineConfiguration.getStartProcessInstanceInterceptor().beforeStartSubProcessInstance(instanceBeforeContext);
         }
 
-        ExecutionEntity subProcessInstance = CommandContextUtil.getExecutionEntityManager(commandContext).createSubprocessInstance(
+        ExecutionEntity subProcessInstance = processEngineConfiguration.getExecutionEntityManager().createSubprocessInstance(
                         instanceBeforeContext.getProcessDefinition(), instanceBeforeContext.getCallActivityExecution(), 
                         instanceBeforeContext.getBusinessKey(), instanceBeforeContext.getInitialActivityId());
 
         FlowableEventDispatcher eventDispatcher = processEngineConfiguration.getEventDispatcher();
         if (eventDispatcher != null && eventDispatcher.isEnabled()) {
-            CommandContextUtil.getProcessEngineConfiguration().getEventDispatcher().dispatchEvent(
-                    FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.PROCESS_CREATED, subProcessInstance));
+            processEngineConfiguration.getEventDispatcher().dispatchEvent(
+                    FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.PROCESS_CREATED, subProcessInstance),
+                    processEngineConfiguration.getEngineCfgKey());
         }
 
         // process template-defined data objects
@@ -200,11 +202,13 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
         }
 
         if (eventDispatcher != null && eventDispatcher.isEnabled()) {
-            eventDispatcher.dispatchEvent(FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.ENTITY_INITIALIZED, subProcessInstance));
+            eventDispatcher.dispatchEvent(FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.ENTITY_INITIALIZED, subProcessInstance),
+                    processEngineConfiguration.getEngineCfgKey());
         }
         
         if (processEngineConfiguration.isEnableEntityLinks()) {
-            EntityLinkUtil.createEntityLinks(execution.getProcessInstanceId(), subProcessInstance.getId(), ScopeTypes.BPMN);
+            EntityLinkUtil.createEntityLinks(execution.getProcessInstanceId(), executionEntity.getId(), callActivity.getId(),
+                    subProcessInstance.getId(), ScopeTypes.BPMN);
         }
 
         if (StringUtils.isNotEmpty(callActivity.getProcessInstanceIdVariableName())) {
@@ -227,12 +231,13 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
             processEngineConfiguration.getStartProcessInstanceInterceptor().afterStartSubProcessInstance(instanceAfterContext);
         }
 
-        CommandContextUtil.getActivityInstanceEntityManager(commandContext).recordSubProcessInstanceStart(executionEntity, subProcessInstance);
+        processEngineConfiguration.getActivityInstanceEntityManager().recordSubProcessInstanceStart(executionEntity, subProcessInstance);
 
         CommandContextUtil.getAgenda().planContinueProcessOperation(subProcessInitialExecution);
 
         if (eventDispatcher != null && eventDispatcher.isEnabled()) {
-            eventDispatcher.dispatchEvent(FlowableEventBuilder.createProcessStartedEvent(subProcessInitialExecution, instanceBeforeContext.getVariables(), false));
+            eventDispatcher.dispatchEvent(FlowableEventBuilder.createProcessStartedEvent(subProcessInitialExecution, instanceBeforeContext.getVariables(), false),
+                    processEngineConfiguration.getEngineCfgKey());
         }
         
     }
@@ -274,7 +279,7 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
             }
 
             String variableName = null;
-            if (StringUtils.isNotEmpty(outParameter.getTarget()))  {
+            if (StringUtils.isNotEmpty(outParameter.getTarget())) {
                 variableName = outParameter.getTarget();
 
             } else if (StringUtils.isNotEmpty(outParameter.getTargetExpression())) {
@@ -291,9 +296,9 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
             }
 
             if (callActivity.isUseLocalScopeForOutParameters()) {
-                execution.setVariableLocal(variableName, value);
+                executionEntity.setVariableLocal(variableName, value);
             } else {
-                execution.setVariable(variableName, value);
+                executionEntity.setVariable(variableName, value);
             }
         }
     }
@@ -301,6 +306,12 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
     @Override
     public void completed(DelegateExecution execution) throws Exception {
         // only control flow. no sub process instance data available
+
+        ExecutionEntity executionEntity = (ExecutionEntity) execution;
+        if (executionEntity.isSuspended() || ProcessDefinitionUtil.isProcessDefinitionSuspended(execution.getProcessDefinitionId())) {
+            throw new FlowableException("Cannot complete process instance. Parent process instance " + executionEntity.getId() + " is suspended");
+        }
+
         leave(execution);
     }
 

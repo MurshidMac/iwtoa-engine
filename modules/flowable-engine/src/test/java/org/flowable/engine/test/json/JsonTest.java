@@ -513,12 +513,11 @@ public class JsonTest extends PluggableFlowableTestCase {
                         + "}");
 
         value = (ObjectNode) runtimeService.getVariable(processInstance.getId(), BIG_JSON_OBJ);
-        assertThat(value).isNotNull();
-        assertThat(value.toString()).isEqualTo(createBigJsonObject().toString());
+        assertThat(value).hasToString(createBigJsonObject().toString());
 
         VariableInstance variableInstance = runtimeService.getVariableInstance(processInstance.getId(), BIG_JSON_OBJ);
         assertThat(variableInstance).isNotNull();
-        assertThat(variableInstance.getValue().toString()).isEqualTo(createBigJsonObject().toString());
+        assertThat(variableInstance.getValue()).hasToString(createBigJsonObject().toString());
 
         task = taskService.createTaskQuery().active().singleResult();
         assertThat(task).isNotNull();
@@ -531,8 +530,7 @@ public class JsonTest extends PluggableFlowableTestCase {
 
             assertThat(historicVariableInstances.get(0).getVariableName()).isEqualTo(BIG_JSON_OBJ);
             value = (ObjectNode) historicVariableInstances.get(0).getValue();
-            assertThat(value).isNotNull();
-            assertThat(value.toString()).isEqualTo(createBigJsonObject().toString());
+            assertThat(value).hasToString(createBigJsonObject().toString());
 
             assertThat(historicVariableInstances.get(1).getVariableName()).isEqualTo(MY_JSON_OBJ);
             value = (ObjectNode) historicVariableInstances.get(1).getValue();
@@ -550,7 +548,7 @@ public class JsonTest extends PluggableFlowableTestCase {
                     .singleResult();
 
             assertThat(historicVariableInstance).isNotNull();
-            assertThat(historicVariableInstance.getValue().toString()).isEqualTo(createBigJsonObject().toString());
+            assertThat(historicVariableInstance.getValue()).hasToString(createBigJsonObject().toString());
         }
 
         // It should be possible do remove a json variable
@@ -692,6 +690,41 @@ public class JsonTest extends PluggableFlowableTestCase {
     @Test
     @Deployment
     public void testJsonArrayAccessByIndex() {
+        Map<String, Object> vars = new HashMap<>();
+
+        ArrayNode varArray = objectMapper.createArrayNode();
+        ObjectNode varNode = objectMapper.createObjectNode();
+        varNode.put("var", "myValue");
+        varArray.add(varNode);
+        vars.put("myJsonArr", varArray);
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("testJsonAvailableProcess", vars);
+
+        // Check JSON has been parsed as expected
+        ArrayNode value = (ArrayNode) runtimeService.getVariable(processInstance.getId(), "myJsonArr");
+        assertThat(value).isNotNull();
+        assertThatJson(value)
+                .isEqualTo("[ { "
+                        + "   var: 'myValue'"
+                        + "} ]");
+
+        org.flowable.task.api.Task task = taskService.createTaskQuery().active().singleResult();
+        assertThat(task).isNotNull();
+        ArrayNode taskVarArray = objectMapper.createArrayNode();
+        taskVarArray.addObject().put("var", "firstValue");
+        taskVarArray.addObject().put("var", "secondValue");
+        taskVarArray.addObject().put("var", "thirdValue");
+        vars = new HashMap<>();
+        vars.put("myJsonArr", taskVarArray);
+        taskService.complete(task.getId(), vars);
+
+        task = taskService.createTaskQuery().active().singleResult();
+        assertThat(task).isNotNull();
+        assertThat(task.getTaskDefinitionKey()).isEqualTo("userTaskSuccess");
+    }
+
+    @Test
+    @Deployment
+    public void testJsonArrayAccessByNegativeIndex() {
         Map<String, Object> vars = new HashMap<>();
 
         ArrayNode varArray = objectMapper.createArrayNode();

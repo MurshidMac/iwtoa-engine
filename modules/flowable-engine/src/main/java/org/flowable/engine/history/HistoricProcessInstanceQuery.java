@@ -20,7 +20,6 @@ import java.util.Set;
 
 import org.flowable.common.engine.api.query.DeleteQuery;
 import org.flowable.common.engine.api.query.Query;
-import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.runtime.ProcessInstanceQuery;
 
 /**
@@ -34,12 +33,12 @@ import org.flowable.engine.runtime.ProcessInstanceQuery;
 public interface HistoricProcessInstanceQuery extends Query<HistoricProcessInstanceQuery, HistoricProcessInstance>, DeleteQuery<HistoricProcessInstanceQuery, HistoricProcessInstance> {
 
     /**
-     * Only select historic process instances with the given process instance. {@link ProcessInstance) ids and {@link HistoricProcessInstance} ids match.
+     * Only select historic process instances with the given process instance. {@link org.flowable.engine.runtime.ProcessInstance} ids and {@link HistoricProcessInstance} ids match.
      */
     HistoricProcessInstanceQuery processInstanceId(String processInstanceId);
 
     /**
-     * Only select historic process instances whose id is in the given set of ids. {@link ProcessInstance) ids and {@link HistoricProcessInstance} ids match.
+     * Only select historic process instances whose id is in the given set of ids. {@link org.flowable.engine.runtime.ProcessInstance} ids and {@link HistoricProcessInstance} ids match.
      */
     HistoricProcessInstanceQuery processInstanceIds(Set<String> processInstanceIds);
 
@@ -101,6 +100,16 @@ public interface HistoricProcessInstanceQuery extends Query<HistoricProcessInsta
 
     /** Only select historic process instance that are not deleted. */
     HistoricProcessInstanceQuery notDeleted();
+    
+    /**
+     * Select the historic process instances which have an active activity instance like the provided id.
+     */
+    HistoricProcessInstanceQuery activeActivityId(String activityId);
+    
+    /**
+     * Select the historic process instances which have an active activity instance like the provided ids.
+     */
+    HistoricProcessInstanceQuery activeActivityIds(Set<String> activityIds);
 
     /** Only select the historic process instances with which the user with the given id is involved. */
     HistoricProcessInstanceQuery involvedUser(String userId);
@@ -116,7 +125,7 @@ public interface HistoricProcessInstanceQuery extends Query<HistoricProcessInsta
 
     /**
      * Only select process instances which had a global variable with the given value when they ended. The type only applies to already ended process instances, otherwise use a
-     * {@link ProcessInstanceQuery} instead! of variable is determined based on the value, using types configured in {@link ProcessEngineConfiguration#getVariableTypes()}. Byte-arrays and
+     * {@link ProcessInstanceQuery} instead! A variable type is determined based on the value, using types configured in {@link org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl#getVariableTypes()}. Byte-arrays and
      * {@link Serializable} objects (which are not primitive type wrappers) are not supported.
      * 
      * @param name
@@ -126,7 +135,7 @@ public interface HistoricProcessInstanceQuery extends Query<HistoricProcessInsta
 
     /**
      * Only select process instances which had at least one global variable with the given value when they ended. The type only applies to already ended process instances, otherwise use a
-     * {@link ProcessInstanceQuery} instead! of variable is determined based on the value, using types configured in {@link ProcessEngineConfiguration#getVariableTypes()}. Byte-arrays and
+     * {@link ProcessInstanceQuery} instead! A variable type is determined based on the value, using types configured in {@link org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl#getVariableTypes()}. Byte-arrays and
      * {@link Serializable} objects (which are not primitive type wrappers) are not supported.
      */
     HistoricProcessInstanceQuery variableValueEquals(Object value);
@@ -312,7 +321,7 @@ public interface HistoricProcessInstanceQuery extends Query<HistoricProcessInsta
     HistoricProcessInstanceQuery orderByTenantId();
 
     /**
-     * Only select historic process instances started by the given process instance. {@link ProcessInstance) ids and {@link HistoricProcessInstance} ids match.
+     * Only select historic process instances started by the given process instance. {@link org.flowable.engine.runtime.ProcessInstance} ids and {@link HistoricProcessInstance} ids match.
      */
     HistoricProcessInstanceQuery superProcessInstanceId(String superProcessInstanceId);
 

@@ -12,15 +12,16 @@
  */
 package org.flowable.dmn.converter.child;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import javax.xml.stream.XMLStreamReader;
+
 import org.apache.commons.lang3.StringUtils;
-import org.flowable.dmn.model.DecisionTable;
+import org.flowable.dmn.model.Decision;
 import org.flowable.dmn.model.DmnElement;
 import org.flowable.dmn.model.OutputClause;
 import org.flowable.dmn.model.UnaryTests;
-
-import javax.xml.stream.XMLStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * @author Yvo Swillens
@@ -33,7 +34,7 @@ public class OutputValuesParser extends BaseChildElementParser {
     }
 
     @Override
-    public void parseChildElement(XMLStreamReader xtr, DmnElement parentElement, DecisionTable decisionTable) throws Exception {
+    public void parseChildElement(XMLStreamReader xtr, DmnElement parentElement, Decision decision) throws Exception {
         if (!(parentElement instanceof OutputClause))
             return;
 

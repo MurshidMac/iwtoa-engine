@@ -36,7 +36,7 @@ public class EventSubscriptionEntityManagerImpl
     public EventSubscriptionEntityManagerImpl(EventSubscriptionServiceConfiguration eventSubscriptionServiceConfiguration, 
                     EventSubscriptionDataManager eventSubscriptionDataManager) {
         
-        super(eventSubscriptionServiceConfiguration, eventSubscriptionDataManager);
+        super(eventSubscriptionServiceConfiguration, eventSubscriptionServiceConfiguration.getEngineName(), eventSubscriptionDataManager);
     }
 
     @Override
@@ -202,6 +202,11 @@ public class EventSubscriptionEntityManagerImpl
     @Override
     public void deleteEventSubscriptionsForScopeDefinitionIdAndType(String scopeDefinitionId, String scopeType) {
         dataManager.deleteEventSubscriptionsForScopeDefinitionIdAndType(scopeDefinitionId, scopeType);
+    }
+
+    @Override
+    public void deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(String scopeDefinitionId, String scopeType) {
+        dataManager.deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(scopeDefinitionId, scopeType);
     }
 
     protected SignalEventSubscriptionEntity insertSignalEvent(EventSubscriptionBuilder eventSubscriptionBuilder) {

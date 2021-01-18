@@ -127,7 +127,7 @@ public class DeploymentCollectionResource {
             deploymentQuery.deploymentTenantIdLike(allRequestParams.get("tenantIdLike"));
         }
         if (allRequestParams.containsKey("withoutTenantId")) {
-            Boolean withoutTenantId = Boolean.valueOf(allRequestParams.get("withoutTenantId"));
+            boolean withoutTenantId = Boolean.parseBoolean(allRequestParams.get("withoutTenantId"));
             if (withoutTenantId) {
                 deploymentQuery.deploymentWithoutTenantId();
             }
@@ -180,7 +180,7 @@ public class DeploymentCollectionResource {
         try {
             EventDeploymentBuilder deploymentBuilder = repositoryService.createDeployment();
             String fileName = file.getOriginalFilename();
-            if (StringUtils.isEmpty(fileName) || !(fileName.endsWith(".cmmn.xml") || fileName.endsWith(".cmmn"))) {
+            if (StringUtils.isEmpty(fileName) || !(fileName.endsWith(".event") || fileName.endsWith(".channel"))) {
 
                 fileName = file.getName();
             }

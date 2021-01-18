@@ -35,6 +35,7 @@ import org.flowable.common.engine.impl.DefaultTenantProvider;
 import org.flowable.common.engine.impl.interceptor.Command;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.persistence.cache.EntityCache;
+import org.flowable.job.api.Job;
 import org.junit.Test;
 
 /**
@@ -80,7 +81,7 @@ public class CmmnRuntimeServiceTest extends FlowableCmmnTestCase {
             }
         });
         
-        assertThat(planItemInstances.size()).isEqualTo(1);
+        assertThat(planItemInstances).hasSize(1);
         assertThat(planItemInstances.get(0).getPlanItemDefinitionId()).isEqualTo("theTask");
 
         // default values for callbacks are null
@@ -151,10 +152,14 @@ public class CmmnRuntimeServiceTest extends FlowableCmmnTestCase {
 
         assertThat(caseInstance).isNotNull();
         assertThat(this.cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count())
-                .as("Plan items are created asynchronously").isEqualTo(0l);
+                .as("Plan items are created asynchronously").isZero();
+
+        Job job = this.cmmnManagementService.createJobQuery().singleResult();
+        assertThat(job).isNotNull();
+        assertThat(job.isExclusive()).isFalse();
 
         CmmnJobTestHelper.waitForJobExecutorToProcessAllJobs(cmmnEngineConfiguration, 7000L, 200, true);
-        assertThat(this.cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1l);
+        assertThat(this.cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
     }
 
     @Test
@@ -175,7 +180,7 @@ public class CmmnRuntimeServiceTest extends FlowableCmmnTestCase {
     public void createCaseInstanceAsyncWithNonExistingDefId() {
         assertThatThrownBy(() -> cmmnRuntimeService.createCaseInstanceBuilder().caseDefinitionId("nonExistingDefinition").startAsync())
                 .isInstanceOf(FlowableObjectNotFoundException.class)
-                .hasMessage("No case definition found for id nonExistingDefinition");
+                .hasMessage("no deployed case definition found with id 'nonExistingDefinition'");
     }
 
     @Test

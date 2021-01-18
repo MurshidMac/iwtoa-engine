@@ -463,7 +463,7 @@ It’s possible to support additional variable-types with a custom JSON represen
 
 ## Deployment
 
-**When using tomcat, please read [Usage in Tomcat](restUsageInTomcat).**
+**When using Tomcat, please read [Usage in Tomcat](#usage-In-tomcat).**
 
 ### List of Deployments
 
@@ -3005,14 +3005,8 @@ The general [paging and sorting query-parameters](restPagingAndSort) can be used
 
 **Success response body:**
 
-    {
-       "id":"7",
-       "url":"http://localhost:8182/runtime/process-instances/7",
-       "businessKey":"myBusinessKey",
-       "suspended":false,
-       "processDefinitionUrl":"http://localhost:8182/repository/process-definitions/processOne%3A1%3A4",
-       "activityId":"processTask"
-    }
+    The response is a Blob object containing the binary data or null.
+    
 
 ### Get involved people for process instance
 
@@ -10258,23 +10252,18 @@ handling the signal will be done immediately and result (200 - OK) will only ret
 </tr>
 <tr class="odd">
 <td><p>tenantId</p></td>
-<td><p>No</p></td>
+<td><p>Only return jobs with the given tenantId.</p></td>
 <td><p>String</p></td>
 </tr>
 <tr class="even">
-<td><p>Only return jobs with the given tenantId.</p></td>
 <td><p>tenantIdLike</p></td>
-<td><p>No</p></td>
+<td><p>Only return jobs with a tenantId like the given value.</p></td>
+<td><p>String</p></td>
 </tr>
 <tr class="odd">
-<td><p>String</p></td>
-<td><p>Only return jobs with a tenantId like the given value.</p></td>
 <td><p>withoutTenantId</p></td>
-</tr>
-<tr class="even">
-<td><p>No</p></td>
-<td><p>Boolean</p></td>
 <td><p>If true, only returns jobs without a tenantId set. If false, the withoutTenantId parameter is ignored.</p></td>
+<td><p>Boolean</p></td>
 </tr>
 <tr class="odd">
 <td><p>sort</p></td>

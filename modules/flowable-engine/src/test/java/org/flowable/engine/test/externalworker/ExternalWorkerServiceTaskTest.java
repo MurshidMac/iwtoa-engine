@@ -33,7 +33,6 @@ import org.flowable.engine.impl.jobexecutor.ExternalWorkerTaskCompleteJobHandler
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
-import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.interceptor.CreateExternalWorkerJobAfterContext;
 import org.flowable.engine.interceptor.CreateExternalWorkerJobBeforeContext;
 import org.flowable.engine.interceptor.CreateExternalWorkerJobInterceptor;
@@ -43,8 +42,8 @@ import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
 import org.flowable.job.api.AcquiredExternalWorkerJob;
-import org.flowable.job.api.Job;
 import org.flowable.job.api.ExternalWorkerJob;
+import org.flowable.job.api.Job;
 import org.flowable.job.service.impl.persistence.entity.JobEntity;
 import org.flowable.task.api.TaskInfo;
 import org.flowable.variable.api.history.HistoricVariableInstance;
@@ -847,7 +846,6 @@ public class ExternalWorkerServiceTaskTest extends PluggableFlowableTestCase {
 
         Job movedJob = managementService.moveDeadLetterJobToExecutableJob(deadLetterJob.getId(), 4);
 
-        assertThat(movedJob).isNotNull();
         assertThat(movedJob).isInstanceOf(ExternalWorkerJob.class);
         assertThat(movedJob.getJobType()).isEqualTo(Job.JOB_TYPE_EXTERNAL_WORKER);
         assertThat(movedJob.getRetries()).isEqualTo(4);
@@ -996,7 +994,7 @@ public class ExternalWorkerServiceTaskTest extends PluggableFlowableTestCase {
                 .singleResult();
 
         assertThat(processInstance.getLockOwner()).isEqualTo("worker1");
-        assertThat(processInstance.getLockTime()).isEqualTo(acquiredJob.getLockExpirationTime());
+        assertThat(processInstance.getLockTime()).isEqualToIgnoringMillis(acquiredJob.getLockExpirationTime());
 
         managementService.executeCommand(new ClearProcessInstanceLockTimesCmd(processEngineConfiguration.getAsyncExecutor().getLockOwner()));
 
@@ -1006,7 +1004,7 @@ public class ExternalWorkerServiceTaskTest extends PluggableFlowableTestCase {
                 .singleResult();
 
         assertThat(processInstance.getLockOwner()).isEqualTo("worker1");
-        assertThat(processInstance.getLockTime()).isEqualTo(acquiredJob.getLockExpirationTime());
+        assertThat(processInstance.getLockTime()).isEqualToIgnoringMillis(acquiredJob.getLockExpirationTime());
 
         managementService.executeCommand(new ClearProcessInstanceLockTimesCmd("worker1"));
 
@@ -1223,7 +1221,7 @@ public class ExternalWorkerServiceTaskTest extends PluggableFlowableTestCase {
 
     protected void addUserIdentityLinkToJob(Job job, String userId) {
         managementService.executeCommand(commandContext -> {
-                    CommandContextUtil.getIdentityLinkService(commandContext)
+                    processEngineConfiguration.getIdentityLinkServiceConfiguration().getIdentityLinkService()
                             .createScopeIdentityLink(null, job.getCorrelationId(), ScopeTypes.EXTERNAL_WORKER, userId, null, IdentityLinkType.PARTICIPANT);
 
                     return null;
@@ -1232,14 +1230,14 @@ public class ExternalWorkerServiceTaskTest extends PluggableFlowableTestCase {
 
     protected void addGroupIdentityLinkToJob(Job job, String groupId) {
         managementService.executeCommand(commandContext -> {
-                    CommandContextUtil.getIdentityLinkService(commandContext)
+                    processEngineConfiguration.getIdentityLinkServiceConfiguration().getIdentityLinkService()
                             .createScopeIdentityLink(null, job.getCorrelationId(), ScopeTypes.EXTERNAL_WORKER, null, groupId, IdentityLinkType.PARTICIPANT);
                     return null;
                 });
     }
 
     protected Collection<IdentityLinkEntity> getJobIdentityLinks(Job job) {
-        return managementService.executeCommand(commandContext -> CommandContextUtil.getIdentityLinkService(commandContext)
+        return managementService.executeCommand(commandContext -> processEngineConfiguration.getIdentityLinkServiceConfiguration().getIdentityLinkService()
                         .findIdentityLinksByScopeIdAndType(job.getCorrelationId(), ScopeTypes.EXTERNAL_WORKER));
     }
 

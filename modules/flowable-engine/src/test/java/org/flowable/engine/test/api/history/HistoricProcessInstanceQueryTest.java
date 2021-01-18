@@ -15,7 +15,9 @@ package org.flowable.engine.test.api.history;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.engine.history.HistoricProcessInstance;
@@ -23,7 +25,7 @@ import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.test.Deployment;
-import org.flowable.task.api.history.HistoricTaskInstance;
+import org.flowable.task.api.Task;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -128,6 +130,43 @@ public class HistoricProcessInstanceQueryTest extends PluggableFlowableTestCase 
     }
     
     @Test
+    @Deployment(resources = { "org/flowable/engine/test/api/runtime/currentActivityTestProcess.bpmn20.xml" })
+    public void testQueryByActiveActivityId() {
+        ProcessInstance processInstance1 = runtimeService.createProcessInstanceBuilder()
+                .processDefinitionKey("currentActivityProcessTest")
+                .start();
+        
+        Task task = taskService.createTaskQuery().processInstanceId(processInstance1.getId()).singleResult();
+        taskService.complete(task.getId());
+        
+        ProcessInstance processInstance2 = runtimeService.createProcessInstanceBuilder()
+                .processDefinitionKey("currentActivityProcessTest")
+                .start();
+
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().activeActivityId("task3").singleResult().getId()).isEqualTo(processInstance1.getId());
+            assertThat(historyService.createHistoricProcessInstanceQuery().activeActivityId("task1").singleResult().getId()).isEqualTo(processInstance2.getId());
+            assertThat(historyService.createHistoricProcessInstanceQuery().activeActivityId("task2").count()).isZero();
+            
+            Set<String> activityIds = new HashSet<String>();
+            activityIds.add("task1");
+            activityIds.add("task2");
+            assertThat(historyService.createHistoricProcessInstanceQuery().activeActivityIds(activityIds).singleResult().getId()).isEqualTo(processInstance2.getId());
+        
+            activityIds = new HashSet<String>();
+            activityIds.add("task1");
+            activityIds.add("task3");
+            assertThat(historyService.createHistoricProcessInstanceQuery().activeActivityIds(activityIds).count()).isEqualTo(2);
+            
+            activityIds = new HashSet<String>();
+            activityIds.add("task2");
+            activityIds.add("task3");
+            assertThat(historyService.createHistoricProcessInstanceQuery().activeActivityIds(activityIds).singleResult().getId()).isEqualTo(processInstance1.getId());
+        }
+    }
+    
+    @Test
     public void testQueryByInvolvedUser() {
         deployOneTaskTestProcess();
         ProcessInstance processInstance = runtimeService.createProcessInstanceBuilder()
@@ -225,6 +264,98 @@ public class HistoricProcessInstanceQueryTest extends PluggableFlowableTestCase 
                     .containsExactlyInAnyOrder(ids);
         }
 
+    }
+
+    @Test
+    public void testQueryVariableValueEqualsAndNotEquals() {
+        deployOneTaskTestProcess();
+        ProcessInstance processWithStringValue = runtimeService.createProcessInstanceBuilder()
+                .processDefinitionKey("oneTaskProcess")
+                .name("With string value")
+                .variable("var", "TEST")
+                .start();
+
+        ProcessInstance processWithNullValue = runtimeService.createProcessInstanceBuilder()
+                .processDefinitionKey("oneTaskProcess")
+                .name("With null value")
+                .variable("var", null)
+                .start();
+
+        ProcessInstance processWithLongValue = runtimeService.createProcessInstanceBuilder()
+                .processDefinitionKey("oneTaskProcess")
+                .name("With long value")
+                .variable("var", 100L)
+                .start();
+
+        ProcessInstance processWithDoubleValue = runtimeService.createProcessInstanceBuilder()
+                .processDefinitionKey("oneTaskProcess")
+                .name("With double value")
+                .variable("var", 45.55)
+                .start();
+
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueNotEquals("var", "TEST").list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With null value", processWithNullValue.getId()),
+                            tuple("With long value", processWithLongValue.getId()),
+                            tuple("With double value", processWithDoubleValue.getId())
+                    );
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueEquals("var", "TEST").list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With string value", processWithStringValue.getId())
+                    );
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueNotEquals("var", 100L).list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With string value", processWithStringValue.getId()),
+                            tuple("With null value", processWithNullValue.getId()),
+                            tuple("With double value", processWithDoubleValue.getId())
+                    );
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueEquals("var", 100L).list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With long value", processWithLongValue.getId())
+                    );
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueNotEquals("var", 45.55).list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With string value", processWithStringValue.getId()),
+                            tuple("With null value", processWithNullValue.getId()),
+                            tuple("With long value", processWithLongValue.getId())
+                    );
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueEquals("var", 45.55).list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With double value", processWithDoubleValue.getId())
+                    );
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueNotEquals("var", "test").list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With string value", processWithStringValue.getId()),
+                            tuple("With null value", processWithNullValue.getId()),
+                            tuple("With long value", processWithLongValue.getId()),
+                            tuple("With double value", processWithDoubleValue.getId())
+                    );
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueEquals("var", "test").list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .isEmpty();
+
+            assertThat(historyService.createHistoricProcessInstanceQuery().variableValueEqualsIgnoreCase("var", "test").list())
+                    .extracting(HistoricProcessInstance::getName, HistoricProcessInstance::getId)
+                    .containsExactlyInAnyOrder(
+                            tuple("With string value", processWithStringValue.getId())
+                    );
+        }
     }
 
 }

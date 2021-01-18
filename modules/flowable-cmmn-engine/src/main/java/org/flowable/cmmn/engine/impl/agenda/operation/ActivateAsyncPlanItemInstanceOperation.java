@@ -45,12 +45,12 @@ public class ActivateAsyncPlanItemInstanceOperation extends AbstractChangePlanIt
     }
 
     @Override
-    protected String getLifeCycleTransition() {
+    public String getLifeCycleTransition() {
         return PlanItemTransition.ASYNC_ACTIVATE;
     }
 
     @Override
-    protected String getNewState() {
+    public String getNewState() {
         return PlanItemInstanceState.ASYNC_ACTIVE;
     }
 
@@ -92,7 +92,8 @@ public class ActivateAsyncPlanItemInstanceOperation extends AbstractChangePlanIt
         
         if (cmmnEngineConfiguration.isLoggingSessionEnabled()) {
             CmmnLoggingSessionUtil.addAsyncActivityLoggingData("Created async job for " + planItemInstanceEntity.getPlanItemDefinitionId() + ", with job id " + job.getId(),
-                            CmmnLoggingSessionConstants.TYPE_SERVICE_TASK_ASYNC_JOB, job, planItemInstanceEntity.getPlanItemDefinition(), planItemInstanceEntity);
+                    CmmnLoggingSessionConstants.TYPE_SERVICE_TASK_ASYNC_JOB, job, planItemInstanceEntity.getPlanItemDefinition(), 
+                    planItemInstanceEntity, cmmnEngineConfiguration.getObjectMapper());
         }
     }
 
@@ -111,7 +112,7 @@ public class ActivateAsyncPlanItemInstanceOperation extends AbstractChangePlanIt
     }
 
     @Override
-    protected String getOperationName() {
+    public String getOperationName() {
         return "[Async activate plan item]";
     }
 

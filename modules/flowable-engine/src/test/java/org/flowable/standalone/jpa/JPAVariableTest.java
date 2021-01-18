@@ -254,7 +254,6 @@ public class JPAVariableTest extends ResourceFlowableTestCase {
         // Set to JPA-entity again
         runtimeService.setVariable(processInstance.getId(), "simpleEntityFieldAccess", simpleEntityFieldAccess);
         currentValue = runtimeService.getVariable(processInstance.getId(), "simpleEntityFieldAccess");
-        assertThat(currentValue).isNotNull();
         assertThat(currentValue).isInstanceOf(FieldAccessJPAEntity.class);
         assertThat(((FieldAccessJPAEntity) currentValue).getId().longValue()).isEqualTo(1L);
 
@@ -382,7 +381,7 @@ public class JPAVariableTest extends ResourceFlowableTestCase {
     public void testStoreJPAEntityListAsVariableEdgeCases() {
 
         // Test using mixed JPA-entities which are not serializable, should not
-        // be picked up by JPA list type en therefor fail due to serialization error
+        // be picked up by JPA list type and therefore fail due to serialization error
         assertThatThrownBy(() ->
         {
             Map<String, Object> variables = new HashMap<>();

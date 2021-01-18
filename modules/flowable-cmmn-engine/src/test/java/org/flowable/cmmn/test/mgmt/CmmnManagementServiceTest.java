@@ -15,7 +15,6 @@ package org.flowable.cmmn.test.mgmt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.flowable.cmmn.api.runtime.CaseInstance;
-import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.engine.test.FlowableCmmnTestCase;
 import org.flowable.common.engine.api.scope.ScopeTypes;
@@ -36,7 +35,7 @@ public class CmmnManagementServiceTest extends FlowableCmmnTestCase {
         CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder().caseDefinitionKey("oneTaskCase").start();
 
         SuspendedJobEntity jobEntity = cmmnEngineConfiguration.getCommandExecutor().execute(commandContext -> {
-            SuspendedJobEntityManager suspendedJobEntityManager = CommandContextUtil.getJobServiceConfiguration(commandContext).getSuspendedJobEntityManager();
+            SuspendedJobEntityManager suspendedJobEntityManager = cmmnEngineConfiguration.getJobServiceConfiguration().getSuspendedJobEntityManager();
             SuspendedJobEntity suspendedJobEntity = suspendedJobEntityManager.create();
             suspendedJobEntity.setScopeId(caseInstance.getId());
             suspendedJobEntity.setSubScopeId("testSubScopeId");
@@ -48,14 +47,14 @@ public class CmmnManagementServiceTest extends FlowableCmmnTestCase {
             return suspendedJobEntity;
         });
 
-        assertThat(cmmnManagementService.createJobQuery().count()).isEqualTo(0);
+        assertThat(cmmnManagementService.createJobQuery().count()).isZero();
         assertThat(cmmnManagementService.createSuspendedJobQuery().count()).isEqualTo(1);
 
         Job executableJob = cmmnManagementService.moveSuspendedJobToExecutableJob(jobEntity.getId());
         assertThat(executableJob).isNotNull();
 
         assertThat(cmmnManagementService.createJobQuery().count()).isEqualTo(1);
-        assertThat(cmmnManagementService.createSuspendedJobQuery().count()).isEqualTo(0);
+        assertThat(cmmnManagementService.createSuspendedJobQuery().count()).isZero();
     }
 
 }

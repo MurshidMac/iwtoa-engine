@@ -23,9 +23,12 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.flowable.cmmn.api.runtime.CaseInstance;
+import org.flowable.cmmn.api.runtime.PlanItemDefinitionType;
+import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.rest.service.BaseSpringRestTestCase;
 import org.flowable.cmmn.rest.service.api.CmmnRestUrls;
+import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.task.api.DelegationState;
 import org.flowable.task.api.Task;
@@ -149,6 +152,9 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
 
             CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase")
                     .businessKey("myBusinessKey").tenantId("myTenant").start();
+            PlanItemInstance planItemInstance = runtimeService.createPlanItemInstanceQuery()
+                .planItemDefinitionType(PlanItemDefinitionType.HUMAN_TASK).singleResult();
+
             Task caseTask = taskService.createTaskQuery().caseInstanceId(caseInstance.getId()).singleResult();
             caseTask.setParentTaskId(adhocTask.getId());
             caseTask.setPriority(50);
@@ -190,7 +196,7 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
             url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?priority=100";
             assertResultsPresentInDataResponse(url, adhocTask.getId());
 
-            // Mininmum Priority filtering
+            // Minimum Priority filtering
             url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?minimumPriority=70";
             assertResultsPresentInDataResponse(url, adhocTask.getId());
 
@@ -256,6 +262,26 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
 
             // Case instance with children filtering
             url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?caseInstanceIdWithChildren=" + caseInstance.getId();
+            assertResultsPresentInDataResponse(url, caseTask.getId());
+
+            // Plan item instance id filtering
+            url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?planItemInstanceId=" + planItemInstance.getId();
+            assertResultsPresentInDataResponse(url, caseTask.getId());
+
+            // Scope id filtering
+            url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?scopeId=" + caseInstance.getId();
+            assertResultsPresentInDataResponse(url, caseTask.getId());
+
+            // Sub scope id id filtering
+            url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?subScopeId=" + planItemInstance.getId();
+            assertResultsPresentInDataResponse(url, caseTask.getId());
+
+            // Scope type filtering
+            url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?scopeType=" + ScopeTypes.CMMN;
+            assertResultsPresentInDataResponse(url, caseTask.getId());
+
+            // Combination of the three above
+            url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?scopeId=" + caseInstance.getId() + "&subScopeId=" + planItemInstance.getId() + "&scopeType=" + ScopeTypes.CMMN;
             assertResultsPresentInDataResponse(url, caseTask.getId());
 
             // Case instance with children filtering
@@ -349,5 +375,40 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
                 repositoryService.deleteDeployment(deployment.getId(), true);
             }
         }
+    }
+
+    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/runtime/PropagatedStageInstanceId.cmmn" })
+    public void testQueryWithPropagatedStageId() throws Exception {
+        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("propagatedStageInstanceId").start();
+        Task task1 = taskService.createTaskQuery().caseInstanceId(caseInstance.getId()).singleResult();
+
+        PlanItemInstance stageInstanceId1 = runtimeService.createPlanItemInstanceQuery()
+            .onlyStages()
+            .caseInstanceId(caseInstance.getId())
+            .planItemDefinitionId("expandedStage2")
+            .singleResult();
+        assertThat(stageInstanceId1).isNotNull();
+
+        String url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?propagatedStageInstanceId=wrong";
+        assertEmptyResultsPresentInDataResponse(url);
+
+        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?propagatedStageInstanceId=" + stageInstanceId1.getId();
+        assertResultsPresentInDataResponse(url, task1.getId());
+
+        taskService.complete(task1.getId());
+        Task task2 = taskService.createTaskQuery().caseInstanceId(caseInstance.getId()).singleResult();
+
+        PlanItemInstance stageInstanceId2 = runtimeService.createPlanItemInstanceQuery()
+            .onlyStages()
+            .caseInstanceId(caseInstance.getId())
+            .planItemDefinitionId("expandedStage3")
+            .singleResult();
+        assertThat(stageInstanceId2).isNotNull();
+
+        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?propagatedStageInstanceId=" + stageInstanceId2.getId();
+        assertResultsPresentInDataResponse(url, task2.getId());
+
+        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_COLLECTION) + "?propagatedStageInstanceId=" + stageInstanceId1.getId();
+        assertEmptyResultsPresentInDataResponse(url);
     }
 }

@@ -217,7 +217,7 @@ public class RuntimeActivityInstanceTest extends PluggableFlowableTestCase {
 
         runtimeService.trigger(runtimeService.createExecutionQuery().processInstanceId(pi.getId()).onlyChildExecutions().singleResult().getId());
 
-        assertThat(0L).isEqualTo(runtimeService.createActivityInstanceQuery().processInstanceId(pi.getId()).count());
+        assertThat(runtimeService.createActivityInstanceQuery().processInstanceId(pi.getId()).count()).isZero();
     }
 
     protected void assertThatActivityInstancesAreSame(String userTask) {
@@ -396,8 +396,6 @@ public class RuntimeActivityInstanceTest extends PluggableFlowableTestCase {
 
         List<ActivityInstance> activityInstance = runtimeService.createActivityInstanceQuery().activityId("join").processInstanceId(processInstance.getId())
                 .list();
-
-        assertThat(activityInstance).isNotNull();
 
         // History contains 2 entries for parallel join (one for each path
         // arriving in the join), should contain end-time

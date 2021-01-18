@@ -422,8 +422,9 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                 .extracting("processDefinitionId")
                 .containsOnly(procDefOneTask.getId());
         Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
-        assertThat(task).extracting(Task::getTaskDefinitionKey).isEqualTo("userTask1Id");
-        assertThat(task).extracting(Task::getProcessDefinitionId).isEqualTo(procDefOneTask.getId());
+        assertThat(task)
+                .extracting(Task::getTaskDefinitionKey, Task::getProcessDefinitionId)
+                .containsExactly("userTask1Id", procDefOneTask.getId());
         List<EventSubscription> eventSubscriptions = runtimeService.createEventSubscriptionQuery().processInstanceId(processInstance.getId()).list();
         assertThat(eventSubscriptions).isEmpty();
 
@@ -449,8 +450,9 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                 .extracting("processDefinitionId")
                 .containsOnly(procWithSignal.getId());
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
-        assertThat(task).extracting(Task::getTaskDefinitionKey).isEqualTo("eventSubProcessTask");
-        assertThat(task).extracting(Task::getProcessDefinitionId).isEqualTo(procWithSignal.getId());
+        assertThat(task)
+                .extracting(Task::getTaskDefinitionKey, Task::getProcessDefinitionId)
+                .containsExactly("eventSubProcessTask", procWithSignal.getId());
 
         //Since the only task in the parent scope was moved, it behaves as a interrupting eventSubProcess
         Job job = managementService.createTimerJobQuery().processInstanceId(processInstance.getId()).singleResult();
@@ -867,6 +869,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                         tuple("sequenceFlow", "flow1"),
                         tuple("userTask", "processTask"),
                         tuple("boundaryEvent", "timerBound"),
+                        tuple("boundaryEvent", "timerBound"),
                         tuple("sequenceFlow", "flow3"),
                         tuple("userTask", "parallelTask")
                 );
@@ -890,6 +893,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                         tuple("startEvent", "processStart"),
                         tuple("sequenceFlow", "flow1"),
                         tuple("userTask", "processTask"),
+                        tuple("boundaryEvent", "timerBound"),
                         tuple("boundaryEvent", "timerBound"),
                         tuple("sequenceFlow", "flow3"),
 
@@ -944,6 +948,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                         tuple("sequenceFlow", "flow1"),
                         tuple("userTask", "processTask"),
                         tuple("boundaryEvent", "timerBound"),
+                        tuple("boundaryEvent", "timerBound"),
                         tuple("sequenceFlow", "flow3"),
 
                         // After migration
@@ -968,6 +973,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                             tuple("startEvent", "processStart"),
                             tuple("sequenceFlow", "flow1"),
                             tuple("userTask", "processTask"),
+                            tuple("boundaryEvent", "timerBound"),
                             tuple("boundaryEvent", "timerBound"),
                             tuple("sequenceFlow", "flow3"),
 
@@ -1038,6 +1044,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                         tuple("sequenceFlow", "flow1"),
                         tuple("userTask", "processTask"),
                         tuple("boundaryEvent", "timerBound"),
+                        tuple("boundaryEvent", "timerBound"),
                         tuple("sequenceFlow", "flow3"),
                         tuple("userTask", "parallelTask")
                 );
@@ -1061,6 +1068,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                         tuple("startEvent", "processStart"),
                         tuple("sequenceFlow", "flow1"),
                         tuple("userTask", "processTask"),
+                        tuple("boundaryEvent", "timerBound"),
                         tuple("boundaryEvent", "timerBound"),
                         tuple("sequenceFlow", "flow3"),
 
@@ -1098,6 +1106,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                         tuple("sequenceFlow", "flow1"),
                         tuple("userTask", "processTask"),
                         tuple("boundaryEvent", "timerBound"),
+                        tuple("boundaryEvent", "timerBound"),
                         tuple("sequenceFlow", "flow3"),
 
                         // After migration
@@ -1134,6 +1143,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                             tuple("startEvent", "processStart"),
                             tuple("sequenceFlow", "flow1"),
                             tuple("userTask", "processTask"),
+                            tuple("boundaryEvent", "timerBound"),
                             tuple("boundaryEvent", "timerBound"),
                             tuple("sequenceFlow", "flow3"),
 
@@ -2961,7 +2971,7 @@ public class ProcessInstanceMigrationEventSubProcessTest extends AbstractProcess
                 .extracting(Task::getProcessDefinitionId)
                 .containsOnly(procWithSignal.getId());
 
-        //Behaves like interrupting since theres no execution in the parentScop
+        //Behaves like interrupting since theres no execution in the parentScope
         job = managementService.createTimerJobQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(job).isNull();
 

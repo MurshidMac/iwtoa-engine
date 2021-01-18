@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 
-import org.flowable.dmn.api.DmnRuleService;
+import org.flowable.dmn.api.DmnDecisionService;
 import org.flowable.dmn.engine.DmnEngine;
 import org.flowable.dmn.engine.test.DmnDeployment;
 import org.flowable.dmn.engine.test.FlowableDmnRule;
@@ -39,7 +39,7 @@ public class SpringJunit4Test {
     private DmnEngine dmnEngine;
 
     @Autowired
-    private DmnRuleService ruleService;
+    private DmnDecisionService ruleService;
 
     @Autowired
     @Rule
@@ -60,7 +60,8 @@ public class SpringJunit4Test {
                 .variable("input1", "testString")
                 .executeWithSingleResult();
 
-        assertThat(executionResult.get("output1")).isEqualTo("test1");
+        assertThat(executionResult)
+                .containsEntry("output1", "test1");
         assertThat(flowableDmnSpringRule.getRepositoryService()).isNotNull();
     }
 }

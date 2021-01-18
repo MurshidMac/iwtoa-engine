@@ -58,7 +58,7 @@ class Index extends React.Component {
         <h2>Talks and tutorials</h2>
 <div className="productShowcaseSection">
 <p>If you just want to download Flowable and have a quick play, this is a good article to follow:</p>
-<a className="normal-link" href="https://paulhh.wordpress.com/2017/01/31/flowable-6-instant-gratification/">Instant Gratification with Flowable 6</a>
+<a className="normal-link" href="https://blog.flowable.org/2020/10/07/flowable-6-instant-gratification/">Instant Gratification with Flowable 6</a>
 
 <h3>Here are some talks we’ve given:</h3>
 <a  className="normal-link" href="https://www.youtube.com/watch?v=uSQVtm8O7SA">bpmNEXT 2019: The Case of the Intentional Process</a><br/>
@@ -70,7 +70,8 @@ class Index extends React.Component {
 <a  className="normal-link" href="https://www.youtube.com/watch?v=HaZQTrfNAgo">Codemotion 2017: Introducing AI to the Flowable Process Engines</a><br/>
 
 <h3>FlowFest Community Event tasks:</h3>
-<a  className="normal-link" href="https://flowable.com/flowfest2018">FlowFest 2018: All talks</a>
+<a  className="normal-link" href="https://flowable.com/flowfest2018">FlowFest 2018: All talks</a><br/>
+<a  className="normal-link" href="https://flowable.com/flowfest2019">FlowFest 2019: All talks</a>
 
 <h3>And links to some others:</h3>
 <a  className="normal-link" href="https://www.youtube.com/watch?v=43_OLrxU3so">Josh Long: Spring Tips: Business Process Management with Flowable</a>

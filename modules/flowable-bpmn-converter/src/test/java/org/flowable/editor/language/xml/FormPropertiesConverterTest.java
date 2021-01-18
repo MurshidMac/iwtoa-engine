@@ -25,36 +25,17 @@ import org.flowable.bpmn.model.FormProperty;
 import org.flowable.bpmn.model.FormValue;
 import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.UserTask;
-import org.junit.Test;
+import org.flowable.editor.language.xml.util.BpmnXmlConverterTest;
 
-public class FormPropertiesConverterTest extends AbstractConverterTest {
+class FormPropertiesConverterTest {
 
-    @Test
-    public void convertJsonToModel() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        validateModel(bpmnModel);
-    }
-
-    @Test
-    public void doubleConversionValidation() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        validateModel(bpmnModel);
-        bpmnModel = exportAndReadXMLFile(bpmnModel);
-        validateModel(bpmnModel);
-    }
-
-    @Override
-    protected String getResource() {
-        return "formPropertiesProcess.bpmn";
-    }
-
-    private void validateModel(BpmnModel model) {
+    @BpmnXmlConverterTest("formPropertiesProcess.bpmn")
+    void validateModel(BpmnModel model) {
         assertThat(model.getMainProcess().getId()).isEqualTo("formPropertiesProcess");
         assertThat(model.getMainProcess().getName()).isEqualTo("User registration");
         assertThat(model.getMainProcess().isExecutable()).isTrue();
 
         FlowElement startFlowElement = model.getMainProcess().getFlowElement("startNode");
-        assertThat(startFlowElement).isNotNull();
         assertThat(startFlowElement).isInstanceOf(StartEvent.class);
         StartEvent startEvent = (StartEvent) startFlowElement;
 
@@ -63,25 +44,23 @@ public class FormPropertiesConverterTest extends AbstractConverterTest {
         }
 
         FlowElement userFlowElement = model.getMainProcess().getFlowElement("userTask");
-        assertThat(userFlowElement).isNotNull();
         assertThat(userFlowElement).isInstanceOf(UserTask.class);
         UserTask userTask = (UserTask) userFlowElement;
 
         List<FormProperty> formProperties = userTask.getFormProperties();
 
-        assertThat(formProperties).isNotNull();
         assertThat(formProperties).as("Invalid form properties list: ").hasSize(8);
 
         for (FormProperty formProperty : formProperties) {
-            if (formProperty.getId().equals("new_property_1")) {
+            if ("new_property_1".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, false, false, false);
-            } else if (formProperty.getId().equals("new_property_2")) {
+            } else if ("new_property_2".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, false, false, true);
-            } else if (formProperty.getId().equals("new_property_3")) {
+            } else if ("new_property_3".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, false, true, false);
-            } else if (formProperty.getId().equals("new_property_4")) {
+            } else if ("new_property_4".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, false, true, true);
-            } else if (formProperty.getId().equals("new_property_5")) {
+            } else if ("new_property_5".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, true, false, false);
 
                 List<Map<String, Object>> formValues = new ArrayList<>();
@@ -93,11 +72,11 @@ public class FormPropertiesConverterTest extends AbstractConverterTest {
                 }
                 checkFormPropertyFormValues(formValues);
 
-            } else if (formProperty.getId().equals("new_property_6")) {
+            } else if ("new_property_6".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, true, false, true);
-            } else if (formProperty.getId().equals("new_property_7")) {
+            } else if ("new_property_7".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, true, true, false);
-            } else if (formProperty.getId().equals("new_property_8")) {
+            } else if ("new_property_8".equals(formProperty.getId())) {
                 checkFormProperty(formProperty, true, true, true);
             }
         }

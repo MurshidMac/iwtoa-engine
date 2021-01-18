@@ -19,33 +19,14 @@ import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.ExtensionElement;
 import org.flowable.bpmn.model.ExternalWorkerServiceTask;
 import org.flowable.bpmn.model.FlowElement;
-import org.junit.Test;
+import org.flowable.editor.language.xml.util.BpmnXmlConverterTest;
 
-public class ExternalWorkerServiceTaskWithExtensionElementsConverterTest extends AbstractConverterTest {
+class ExternalWorkerServiceTaskWithExtensionElementsConverterTest {
 
-    @Test
-    public void convertXMLToModel() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        validateModel(bpmnModel);
-    }
-
-    @Test
-    public void convertModelToXML() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        BpmnModel parsedModel = exportAndReadXMLFile(bpmnModel);
-        validateModel(parsedModel);
-    }
-
-    @Override
-    protected String getResource() {
-        return "externalWorkerServiceTaskWithExtensionElements.bpmn";
-    }
-
-    private void validateModel(BpmnModel model) {
+    @BpmnXmlConverterTest("externalWorkerServiceTaskWithExtensionElements.bpmn")
+    void validateModel(BpmnModel model) {
         FlowElement flowElement = model.getMainProcess().getFlowElement("externalWorkerServiceTask");
-        assertThat(flowElement)
-                .isNotNull()
-                .isInstanceOf(ExternalWorkerServiceTask.class);
+        assertThat(flowElement).isInstanceOf(ExternalWorkerServiceTask.class);
         ExternalWorkerServiceTask externalWorkerServiceTask = (ExternalWorkerServiceTask) flowElement;
         assertThat(externalWorkerServiceTask.getId()).isEqualTo("externalWorkerServiceTask");
         assertThat(externalWorkerServiceTask.getName()).isEqualTo("External worker task");

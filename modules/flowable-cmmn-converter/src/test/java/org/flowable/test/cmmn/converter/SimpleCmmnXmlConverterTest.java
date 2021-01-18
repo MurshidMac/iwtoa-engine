@@ -13,6 +13,7 @@
 package org.flowable.test.cmmn.converter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.List;
 
@@ -25,42 +26,26 @@ import org.flowable.cmmn.model.Sentry;
 import org.flowable.cmmn.model.SentryOnPart;
 import org.flowable.cmmn.model.Stage;
 import org.flowable.cmmn.model.Task;
-import org.junit.Test;
+import org.flowable.test.cmmn.converter.util.CmmnXmlConverterTest;
 
 /**
  * @author Tijs Rademakers
  */
-public class SimpleCmmnXmlConverterTest extends AbstractConverterTest {
+public class SimpleCmmnXmlConverterTest {
 
-    private static final String CMMN_RESOURCE = "org/flowable/test/cmmn/converter/simple.cmmn";
-
-    @Test
-    public void convertXMLToModel() throws Exception {
-        CmmnModel cmmnModel = readXMLFile(CMMN_RESOURCE);
-        validateModel(cmmnModel);
-    }
-
-    @Test
-    public void convertModelToXML() throws Exception {
-        CmmnModel cmmnModel = readXMLFile(CMMN_RESOURCE);
-        CmmnModel parsedModel = exportAndReadXMLFile(cmmnModel);
-        validateModel(parsedModel);
-    }
-
+    @CmmnXmlConverterTest("org/flowable/test/cmmn/converter/simple.cmmn")
     public void validateModel(CmmnModel cmmnModel) {
         assertThat(cmmnModel).isNotNull();
-        assertThat(cmmnModel.getCases()).hasSize(1);
+        assertThat(cmmnModel.getCases())
+                .extracting(Case::getId, Case::getInitiatorVariableName)
+                .containsExactly(tuple("myCase", "test"));
 
         // Case
         Case caze = cmmnModel.getCases().get(0);
-        assertThat(caze.getId()).isEqualTo("myCase");
-        assertThat(caze.getInitiatorVariableName()).isEqualTo("test");
-        assertThat(caze.getCandidateStarterUsers()).hasSize(2);
-        assertThat(caze.getCandidateStarterUsers().contains("test")).isTrue();
-        assertThat(caze.getCandidateStarterUsers().contains("test2")).isTrue();
-        assertThat(caze.getCandidateStarterGroups()).hasSize(2);
-        assertThat(caze.getCandidateStarterGroups().contains("group")).isTrue();
-        assertThat(caze.getCandidateStarterGroups().contains("group2")).isTrue();
+        assertThat(caze.getCandidateStarterUsers())
+                .containsExactlyInAnyOrder("test", "test2");
+        assertThat(caze.getCandidateStarterGroups())
+                .containsExactlyInAnyOrder("group", "group2");
 
         // Plan model
         Stage planModel = caze.getPlanModel();
@@ -75,9 +60,9 @@ public class SimpleCmmnXmlConverterTest extends AbstractConverterTest {
         for (Sentry sentry : planModel.getSentries()) {
             List<SentryOnPart> onParts = sentry.getOnParts();
             assertThat(onParts)
-                .hasSize(1)
-                .extracting(SentryOnPart::getId, SentryOnPart::getSourceRef, SentryOnPart::getSource, SentryOnPart::getStandardEvent)
-                .doesNotContainNull();
+                    .hasSize(1)
+                    .extracting(SentryOnPart::getId, SentryOnPart::getSourceRef, SentryOnPart::getSource, SentryOnPart::getStandardEvent)
+                    .doesNotContainNull();
         }
 
         // Plan items definitions
@@ -97,8 +82,8 @@ public class SimpleCmmnXmlConverterTest extends AbstractConverterTest {
         int nrOfMileStones = 0;
         for (PlanItem planItem : planItems) {
             assertThat(planItem)
-                .extracting(PlanItem::getId, PlanItem::getDefinitionRef, PlanItem::getPlanItemDefinition) // Verify plan item definition ref is resolved
-                .doesNotContainNull();
+                    .extracting(PlanItem::getId, PlanItem::getDefinitionRef, PlanItem::getPlanItemDefinition) // Verify plan item definition ref is resolved
+                    .doesNotContainNull();
 
             PlanItemDefinition planItemDefinition = planItem.getPlanItemDefinition();
             if (planItemDefinition instanceof Milestone) {
@@ -107,14 +92,13 @@ public class SimpleCmmnXmlConverterTest extends AbstractConverterTest {
                 nrOfTasks++;
             }
 
-            if (!planItem.getId().equals("planItemTaskA")) {
-                assertThat(planItem.getEntryCriteria()).isNotNull();
+            if (!"planItemTaskA".equals(planItem.getId())) {
                 assertThat(planItem.getEntryCriteria()).hasSize(1);
                 assertThat(planItem.getEntryCriteria().get(0).getSentry()).isNotNull(); // Verify if sentry reference is resolved
             }
 
             if (planItem.getPlanItemDefinition() instanceof Task) {
-                if (planItem.getId().equals("planItemTaskB")) {
+                if ("planItemTaskB".equals(planItem.getId())) {
                     assertThat(((Task) planItem.getPlanItemDefinition()).isBlocking()).isFalse();
                 } else {
                     assertThat(((Task) planItem.getPlanItemDefinition()).isBlocking()).isTrue();

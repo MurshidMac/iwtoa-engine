@@ -13,6 +13,7 @@
 package org.flowable.engine.test.api.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -682,7 +683,6 @@ public class ActivityEventsTest extends PluggableFlowableTestCase {
         assertThat(signalEvent.getActivityId()).isEqualTo("cloudformtask1");
         assertThat(signalEvent.getProcessInstanceId()).isEqualTo(executionWithMessage.getProcessInstanceId());
         assertThat(signalEvent.getProcessDefinitionId()).isEqualTo(processInstance.getProcessDefinitionId());
-        assertThat(signalEvent.getCause()).isNotNull();
         assertThat(signalEvent.getCause()).isInstanceOf(BoundaryEvent.class);
         BoundaryEvent cause = (BoundaryEvent) signalEvent.getCause();
         assertThat(((MessageEventDefinition) cause.getEventDefinitions().get(0)).getMessageRef()).isEqualTo("message_1");
@@ -779,7 +779,6 @@ public class ActivityEventsTest extends PluggableFlowableTestCase {
         assertThat(cancelEvent.getActivityId()).isEqualTo("cloudformtask1");
         assertThat(cancelEvent.getProcessInstanceId()).isEqualTo(executionWithMessage.getProcessInstanceId());
         assertThat(cancelEvent.getProcessDefinitionId()).isEqualTo(processInstance.getProcessDefinitionId());
-        assertThat(cancelEvent.getCause()).isNotNull();
         assertThat(cancelEvent.getCause()).isInstanceOf(BoundaryEvent.class);
         BoundaryEvent cause = (BoundaryEvent) cancelEvent.getCause();
         assertThat(((MessageEventDefinition) cause.getEventDefinitions().get(0)).getMessageRef()).isEqualTo("message_1");
@@ -790,7 +789,6 @@ public class ActivityEventsTest extends PluggableFlowableTestCase {
         assertThat(cancelEvent.getActivityId()).isEqualTo("subProcess");
         assertThat(cancelEvent.getProcessInstanceId()).isEqualTo(executionWithMessage.getProcessInstanceId());
         assertThat(cancelEvent.getProcessDefinitionId()).isEqualTo(processInstance.getProcessDefinitionId());
-        assertThat(cancelEvent.getCause()).isNotNull();
         assertThat(cancelEvent.getCause()).isInstanceOf(BoundaryEvent.class);
         cause = (BoundaryEvent) cancelEvent.getCause();
         assertThat(((MessageEventDefinition) cause.getEventDefinitions().get(0)).getMessageRef()).isEqualTo("message_1");
@@ -874,7 +872,6 @@ public class ActivityEventsTest extends PluggableFlowableTestCase {
         assertThat(cancelEvent.getExecutionId()).isEqualTo(executionWithSignal.getId());
         assertThat(cancelEvent.getProcessInstanceId()).isEqualTo(executionWithSignal.getProcessInstanceId());
         assertThat(cancelEvent.getProcessDefinitionId()).isEqualTo(processInstance.getProcessDefinitionId());
-        assertThat(cancelEvent.getCause()).isNotNull();
         assertThat(cancelEvent.getCause()).isInstanceOf(BoundaryEvent.class);
         BoundaryEvent cause = (BoundaryEvent) cancelEvent.getCause();
         assertThat(cause.getEventDefinitions().get(0)).isInstanceOf(SignalEventDefinition.class);
@@ -889,7 +886,6 @@ public class ActivityEventsTest extends PluggableFlowableTestCase {
         assertThat(cancelEvent.getActivityId()).isEqualTo("subProcess");
         assertThat(cancelEvent.getProcessInstanceId()).isEqualTo(executionWithSignal.getProcessInstanceId());
         assertThat(cancelEvent.getProcessDefinitionId()).isEqualTo(processInstance.getProcessDefinitionId());
-        assertThat(cancelEvent.getCause()).isNotNull();
         assertThat(cancelEvent.getCause()).isInstanceOf(BoundaryEvent.class);
         cause = (BoundaryEvent) cancelEvent.getCause();
         assertThat(cause.getEventDefinitions().get(0)).isInstanceOf(SignalEventDefinition.class);
@@ -933,7 +929,6 @@ public class ActivityEventsTest extends PluggableFlowableTestCase {
         assertThat(cancelEvent.getActivityId()).isEqualTo("userTask");
         assertThat(cancelEvent.getProcessInstanceId()).isEqualTo(executionWithSignal.getProcessInstanceId());
         assertThat(cancelEvent.getProcessDefinitionId()).isEqualTo(processInstance.getProcessDefinitionId());
-        assertThat(cancelEvent.getCause()).isNotNull();
         assertThat(cancelEvent.getCause()).isInstanceOf(BoundaryEvent.class);
         BoundaryEvent cause = (BoundaryEvent) cancelEvent.getCause();
         assertThat(cause.getEventDefinitions().get(0)).isInstanceOf(SignalEventDefinition.class);

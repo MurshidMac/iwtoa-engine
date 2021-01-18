@@ -36,8 +36,8 @@ import org.flowable.app.spring.SpringAppEngineConfiguration;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.util.IoUtil;
 import org.flowable.common.spring.CommonAutoDeploymentStrategy;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -105,7 +105,7 @@ public class SpringAutoDeployTest {
         this.repositoryService = applicationContext.getBean(AppRepositoryService.class);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         removeAllDeployments();
         if (this.applicationContext != null) {
@@ -145,7 +145,7 @@ public class SpringAutoDeployTest {
         assertThat(appDefinitionQuery.count()).isEqualTo(1);
     }
 
-    // Updating the form file should lead to a new deployment when restarting the Spring container
+    // Updating the app file should lead to a new deployment when restarting the Spring container
     @Test
     public void testResourceRedeploymentAfterAppDefinitionChange() throws Exception {
         createAppContextWithoutDeploymentMode();
@@ -155,7 +155,7 @@ public class SpringAutoDeployTest {
         String filePath = "org/flowable/app/spring/test/autodeployment/simple.app";
         String originalAppFileContent = IoUtil.readFileAsString(filePath);
         String updatedAppFileContent = originalAppFileContent.replace("Simple app", "My simple app");
-        assertThat(updatedAppFileContent.length() > originalAppFileContent.length()).isTrue();
+        assertThat(updatedAppFileContent).hasSizeGreaterThan(originalAppFileContent.length());
         IoUtil.writeStringToFile(updatedAppFileContent, filePath);
 
         // Classic produced/consumer problem here:
@@ -170,7 +170,7 @@ public class SpringAutoDeployTest {
             IoUtil.writeStringToFile(originalAppFileContent, filePath);
         }
 
-        // Assertions come AFTER the file write! Otherwise the form file is
+        // Assertions come AFTER the file write! Otherwise the app file is
         // messed up if the assertions fail.
         assertThat(repositoryService.createDeploymentQuery().count()).isEqualTo(2);
         assertThat(repositoryService.createAppDefinitionQuery().count()).isEqualTo(2);

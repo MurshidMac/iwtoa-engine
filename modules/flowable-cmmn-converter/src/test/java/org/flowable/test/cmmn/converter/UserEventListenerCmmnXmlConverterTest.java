@@ -13,34 +13,21 @@
 package org.flowable.test.cmmn.converter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.List;
 
 import org.flowable.cmmn.model.CmmnModel;
 import org.flowable.cmmn.model.HumanTask;
 import org.flowable.cmmn.model.UserEventListener;
-import org.junit.Test;
+import org.flowable.test.cmmn.converter.util.CmmnXmlConverterTest;
 
 /**
  * @author Dennis Federico
  */
-public class UserEventListenerCmmnXmlConverterTest extends AbstractConverterTest {
+public class UserEventListenerCmmnXmlConverterTest {
 
-    private static final String CMMN_RESOURCE = "org/flowable/test/cmmn/converter/user-event-listener.cmmn";
-
-    @Test
-    public void convertXMLToModel() throws Exception {
-        CmmnModel cmmnModel = readXMLFile(CMMN_RESOURCE);
-        validateModel(cmmnModel);
-    }
-
-    @Test
-    public void convertModelToXML() throws Exception {
-        CmmnModel cmmnModel = readXMLFile(CMMN_RESOURCE);
-        CmmnModel parsedModel = exportAndReadXMLFile(cmmnModel);
-        validateModel(parsedModel);
-    }
-
+    @CmmnXmlConverterTest("org/flowable/test/cmmn/converter/user-event-listener.cmmn")
     public void validateModel(CmmnModel cmmnModel) {
         assertThat(cmmnModel).isNotNull();
 
@@ -48,11 +35,8 @@ public class UserEventListenerCmmnXmlConverterTest extends AbstractConverterTest
         assertThat(humanTasks).hasSize(2);
 
         List<UserEventListener> userEventListeners = cmmnModel.getPrimaryCase().getPlanModel().findPlanItemDefinitionsOfType(UserEventListener.class, true);
-        assertThat(userEventListeners).hasSize(1);
-
-        UserEventListener userEventListener = userEventListeners.get(0);
-        assertThat(userEventListener.getName()).isEqualTo("myUserEventListener");
-        assertThat(userEventListener.getId()).isEqualTo("userActionListener");
-        assertThat(userEventListener.getDocumentation()).isEqualTo("UserEventListener documentation");
+        assertThat(userEventListeners)
+                .extracting(UserEventListener::getName, UserEventListener::getId, UserEventListener::getDocumentation)
+                .containsExactly(tuple("myUserEventListener", "userActionListener", "UserEventListener documentation"));
     }
 }

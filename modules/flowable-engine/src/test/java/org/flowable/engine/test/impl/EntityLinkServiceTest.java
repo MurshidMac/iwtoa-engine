@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
-import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.entitylink.api.EntityLink;
 import org.flowable.entitylink.api.EntityLinkInfo;
 import org.flowable.entitylink.api.EntityLinkService;
@@ -27,6 +26,7 @@ import org.flowable.entitylink.api.EntityLinkType;
 import org.flowable.entitylink.api.HierarchyType;
 import org.flowable.entitylink.api.history.HistoricEntityLink;
 import org.flowable.entitylink.api.history.HistoricEntityLinkService;
+import org.flowable.entitylink.service.EntityLinkServiceConfiguration;
 import org.flowable.entitylink.service.impl.persistence.entity.EntityLinkEntity;
 import org.flowable.entitylink.service.impl.persistence.entity.HistoricEntityLinkEntity;
 import org.junit.jupiter.api.Test;
@@ -39,32 +39,35 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
     @Test
     void testFindEntityLinksWithSameRootWithNullRoot() {
         managementService.executeCommand(commandContext -> {
-            EntityLinkService entityLinkService = CommandContextUtil.getEntityLinkService(commandContext);
-            HistoricEntityLinkService historicEntityLinkService = CommandContextUtil.getHistoricEntityLinkService();
-            createEntityLinkWithoutRootScope("1", "2.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("1", "2.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("1", "3.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("1", "3.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("2.1", "3.1", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("2.1", "3.2", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
+            EntityLinkServiceConfiguration entityLinkServiceConfiguration = processEngineConfiguration.getEntityLinkServiceConfiguration();
+            EntityLinkService entityLinkService = entityLinkServiceConfiguration.getEntityLinkService();
+            HistoricEntityLinkService historicEntityLinkService = entityLinkServiceConfiguration.getHistoricEntityLinkService();
+            createEntityLinkWithoutRootScope("1", "execution1", "element1", "2.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("1", "execution2", "element2", "2.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("1", "execution3", "element1", "3.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("1", "execution4", "element3", "3.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("2.1", "execution5", "some1", "3.1", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("2.1", "execution6", "some2", "3.2", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
 
             return null;
         });
 
         assertThat(findEntityLinksByScopeId("1"))
-                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                        EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                 .containsExactlyInAnyOrder(
-                        tuple("1", "2.1", HierarchyType.ROOT),
-                        tuple("1", "2.2", HierarchyType.ROOT),
-                        tuple("1", "3.1", HierarchyType.ROOT),
-                        tuple("1", "3.2", HierarchyType.ROOT)
+                        tuple("1", "execution1", "element1", "2.1", HierarchyType.ROOT),
+                        tuple("1", "execution2", "element2", "2.2", HierarchyType.ROOT),
+                        tuple("1", "execution3", "element1", "3.1", HierarchyType.ROOT),
+                        tuple("1", "execution4", "element3", "3.2", HierarchyType.ROOT)
                 );
 
         assertThat(findEntityLinksByScopeId("2.1"))
-                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                        EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                 .containsExactlyInAnyOrder(
-                        tuple("2.1", "3.1", HierarchyType.PARENT),
-                        tuple("2.1", "3.2", HierarchyType.PARENT)
+                        tuple("2.1", "execution5", "some1", "3.1", HierarchyType.PARENT),
+                        tuple("2.1", "execution6", "some2", "3.2", HierarchyType.PARENT)
                 );
 
         assertThat(findEntityLinksByScopeId("2.2"))
@@ -80,19 +83,21 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
                 .isEmpty();
 
         assertThat(findHistoricEntityLinksByScopeId("1"))
-                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                        EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                 .containsExactlyInAnyOrder(
-                        tuple("1", "2.1", HierarchyType.ROOT),
-                        tuple("1", "2.2", HierarchyType.ROOT),
-                        tuple("1", "3.1", HierarchyType.ROOT),
-                        tuple("1", "3.2", HierarchyType.ROOT)
+                        tuple("1", "execution1", "element1", "2.1", HierarchyType.ROOT),
+                        tuple("1", "execution2", "element2", "2.2", HierarchyType.ROOT),
+                        tuple("1", "execution3", "element1", "3.1", HierarchyType.ROOT),
+                        tuple("1", "execution4", "element3", "3.2", HierarchyType.ROOT)
                 );
 
         assertThat(findHistoricEntityLinksByScopeId("2.1"))
-                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                        EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                 .containsExactlyInAnyOrder(
-                        tuple("2.1", "3.1", HierarchyType.PARENT),
-                        tuple("2.1", "3.2", HierarchyType.PARENT)
+                        tuple("2.1", "execution5", "some1", "3.1", HierarchyType.PARENT),
+                        tuple("2.1", "execution6", "some2", "3.2", HierarchyType.PARENT)
                 );
 
         assertThat(findHistoricEntityLinksByScopeId("2.2"))
@@ -108,11 +113,12 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
                 .isEmpty();
 
         managementService.executeCommand(commandContext -> {
-            EntityLinkService entityLinkService = CommandContextUtil.getEntityLinkService(commandContext);
+            EntityLinkServiceConfiguration entityLinkServiceConfiguration = processEngineConfiguration.getEntityLinkServiceConfiguration();
+            EntityLinkService entityLinkService = entityLinkServiceConfiguration.getEntityLinkService();
             entityLinkService.deleteEntityLinksByScopeIdAndType("1", ScopeTypes.BPMN);
             entityLinkService.deleteEntityLinksByScopeIdAndType("2.1", ScopeTypes.BPMN);
 
-            HistoricEntityLinkService historicEntityLinkService = CommandContextUtil.getHistoricEntityLinkService();
+            HistoricEntityLinkService historicEntityLinkService = entityLinkServiceConfiguration.getHistoricEntityLinkService();
             historicEntityLinkService.deleteHistoricEntityLinksByScopeIdAndScopeType("1", ScopeTypes.BPMN);
             historicEntityLinkService.deleteHistoricEntityLinksByScopeIdAndScopeType("2.1", ScopeTypes.BPMN);
             return null;
@@ -122,29 +128,32 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
     @Test
     void testFindEntityLinksWithSameRootWithNullRootInSameContext() {
         managementService.executeCommand(commandContext -> {
-            EntityLinkService entityLinkService = CommandContextUtil.getEntityLinkService(commandContext);
-            HistoricEntityLinkService historicEntityLinkService = CommandContextUtil.getHistoricEntityLinkService();
-            createEntityLinkWithoutRootScope("1", "2.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("1", "2.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("1", "3.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("1", "3.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("2.1", "3.1", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
-            createEntityLinkWithoutRootScope("2.1", "3.2", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
+            EntityLinkServiceConfiguration entityLinkServiceConfiguration = processEngineConfiguration.getEntityLinkServiceConfiguration();
+            EntityLinkService entityLinkService = entityLinkServiceConfiguration.getEntityLinkService();
+            HistoricEntityLinkService historicEntityLinkService = entityLinkServiceConfiguration.getHistoricEntityLinkService();
+            createEntityLinkWithoutRootScope("1", "execution1", "element1", "2.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("1", "execution2", "element2", "2.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("1", "execution3", "element1", "3.1", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("1", "execution4", "element3", "3.2", HierarchyType.ROOT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("2.1", "execution5", "some1", "3.1", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
+            createEntityLinkWithoutRootScope("2.1", "execution6", "some2", "3.2", HierarchyType.PARENT, entityLinkService, historicEntityLinkService);
 
             assertThat(findEntityLinksByScopeId("1"))
-                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                            EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                     .containsExactlyInAnyOrder(
-                            tuple("1", "2.1", HierarchyType.ROOT),
-                            tuple("1", "2.2", HierarchyType.ROOT),
-                            tuple("1", "3.1", HierarchyType.ROOT),
-                            tuple("1", "3.2", HierarchyType.ROOT)
+                            tuple("1", "execution1", "element1", "2.1", HierarchyType.ROOT),
+                            tuple("1", "execution2", "element2", "2.2", HierarchyType.ROOT),
+                            tuple("1", "execution3", "element1", "3.1", HierarchyType.ROOT),
+                            tuple("1", "execution4", "element3", "3.2", HierarchyType.ROOT)
                     );
 
             assertThat(findEntityLinksByScopeId("2.1"))
-                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                            EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                     .containsExactlyInAnyOrder(
-                            tuple("2.1", "3.1", HierarchyType.PARENT),
-                            tuple("2.1", "3.2", HierarchyType.PARENT)
+                            tuple("2.1", "execution5", "some1", "3.1", HierarchyType.PARENT),
+                            tuple("2.1", "execution6", "some2", "3.2", HierarchyType.PARENT)
                     );
 
             assertThat(findEntityLinksByScopeId("2.2"))
@@ -160,19 +169,21 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
                     .isEmpty();
 
             assertThat(findHistoricEntityLinksByScopeId("1"))
-                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                            EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                     .containsExactlyInAnyOrder(
-                            tuple("1", "2.1", HierarchyType.ROOT),
-                            tuple("1", "2.2", HierarchyType.ROOT),
-                            tuple("1", "3.1", HierarchyType.ROOT),
-                            tuple("1", "3.2", HierarchyType.ROOT)
+                            tuple("1", "execution1", "element1", "2.1", HierarchyType.ROOT),
+                            tuple("1", "execution2", "element2", "2.2", HierarchyType.ROOT),
+                            tuple("1", "execution3", "element1", "3.1", HierarchyType.ROOT),
+                            tuple("1", "execution4", "element3", "3.2", HierarchyType.ROOT)
                     );
 
             assertThat(findHistoricEntityLinksByScopeId("2.1"))
-                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
+                    .extracting(EntityLinkInfo::getScopeId, EntityLinkInfo::getSubScopeId, EntityLinkInfo::getParentElementId,
+                            EntityLinkInfo::getReferenceScopeId, EntityLinkInfo::getHierarchyType)
                     .containsExactlyInAnyOrder(
-                            tuple("2.1", "3.1", HierarchyType.PARENT),
-                            tuple("2.1", "3.2", HierarchyType.PARENT)
+                            tuple("2.1", "execution5", "some1", "3.1", HierarchyType.PARENT),
+                            tuple("2.1", "execution6", "some2", "3.2", HierarchyType.PARENT)
                     );
 
             assertThat(findHistoricEntityLinksByScopeId("2.2"))
@@ -191,11 +202,12 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
 
 
         managementService.executeCommand(commandContext -> {
-            EntityLinkService entityLinkService = CommandContextUtil.getEntityLinkService(commandContext);
+            EntityLinkServiceConfiguration entityLinkServiceConfiguration = processEngineConfiguration.getEntityLinkServiceConfiguration();
+            EntityLinkService entityLinkService = entityLinkServiceConfiguration.getEntityLinkService();
             entityLinkService.deleteEntityLinksByScopeIdAndType("1", ScopeTypes.BPMN);
             entityLinkService.deleteEntityLinksByScopeIdAndType("2.1", ScopeTypes.BPMN);
 
-            HistoricEntityLinkService historicEntityLinkService = CommandContextUtil.getHistoricEntityLinkService();
+            HistoricEntityLinkService historicEntityLinkService = entityLinkServiceConfiguration.getHistoricEntityLinkService();
             historicEntityLinkService.deleteHistoricEntityLinksByScopeIdAndScopeType("1", ScopeTypes.BPMN);
             historicEntityLinkService.deleteHistoricEntityLinksByScopeIdAndScopeType("2.1", ScopeTypes.BPMN);
             return null;
@@ -203,32 +215,35 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
     }
 
     protected List<EntityLink> findEntityLinksByScopeId(String scopeId) {
-        return managementService.executeCommand(commandContext -> CommandContextUtil.getEntityLinkService(commandContext)
+        return managementService.executeCommand(commandContext -> processEngineConfiguration.getEntityLinkServiceConfiguration().getEntityLinkService()
                 .findEntityLinksByScopeIdAndType(scopeId, ScopeTypes.BPMN, EntityLinkType.CHILD));
     }
 
     protected List<EntityLink> findEntityLinksWithSameRootByScopeId(String scopeId) {
-        return managementService.executeCommand(commandContext -> CommandContextUtil.getEntityLinkService(commandContext)
+        return managementService.executeCommand(commandContext -> processEngineConfiguration.getEntityLinkServiceConfiguration().getEntityLinkService()
                 .findEntityLinksWithSameRootScopeForScopeIdAndScopeType(scopeId, ScopeTypes.BPMN, EntityLinkType.CHILD));
     }
 
     protected List<HistoricEntityLink> findHistoricEntityLinksByScopeId(String scopeId) {
-        return managementService.executeCommand(commandContext -> CommandContextUtil.getHistoricEntityLinkService()
+        return managementService.executeCommand(commandContext -> processEngineConfiguration.getEntityLinkServiceConfiguration().getHistoricEntityLinkService()
                 .findHistoricEntityLinksByScopeIdAndScopeType(scopeId, ScopeTypes.BPMN, EntityLinkType.CHILD));
     }
 
     protected List<HistoricEntityLink> findHistoricEntityLinksWithSameRootByScopeId(String scopeId) {
-        return managementService.executeCommand(commandContext -> CommandContextUtil.getHistoricEntityLinkService()
+        return managementService.executeCommand(commandContext -> processEngineConfiguration.getEntityLinkServiceConfiguration().getHistoricEntityLinkService()
                 .findHistoricEntityLinksWithSameRootScopeForScopeIdAndScopeType(scopeId, ScopeTypes.BPMN, EntityLinkType.CHILD));
     }
 
-    protected void createEntityLinkWithoutRootScope(String scopeId, String referenceId, String hierarchyType, EntityLinkService entityLinkService,
+    protected void createEntityLinkWithoutRootScope(String scopeId, String subScopeId, String parentElementId,
+            String referenceId, String hierarchyType, EntityLinkService entityLinkService,
             HistoricEntityLinkService historicEntityLinkService) {
 
         EntityLinkEntity entityLink = (EntityLinkEntity) entityLinkService.createEntityLink();
         entityLink.setScopeId(scopeId);
+        entityLink.setSubScopeId(subScopeId);
         entityLink.setScopeType(ScopeTypes.BPMN);
         entityLink.setLinkType(EntityLinkType.CHILD);
+        entityLink.setParentElementId(parentElementId);
         entityLink.setReferenceScopeId(referenceId);
         entityLink.setReferenceScopeType(ScopeTypes.BPMN);
         entityLink.setHierarchyType(hierarchyType);
@@ -236,8 +251,10 @@ public class EntityLinkServiceTest extends PluggableFlowableTestCase {
 
         HistoricEntityLinkEntity historicEntityLink = (HistoricEntityLinkEntity) historicEntityLinkService.createHistoricEntityLink();
         historicEntityLink.setScopeId(scopeId);
+        historicEntityLink.setSubScopeId(subScopeId);
         historicEntityLink.setScopeType(ScopeTypes.BPMN);
         historicEntityLink.setLinkType(EntityLinkType.CHILD);
+        historicEntityLink.setParentElementId(parentElementId);
         historicEntityLink.setReferenceScopeId(referenceId);
         historicEntityLink.setReferenceScopeType(ScopeTypes.BPMN);
         historicEntityLink.setHierarchyType(hierarchyType);

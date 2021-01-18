@@ -36,17 +36,17 @@ public class InitiatePlanItemInstanceOperation extends AbstractChangePlanItemIns
     }
 
     @Override
-    protected String getNewState() {
+    public String getNewState() {
         return PlanItemInstanceState.AVAILABLE;
     }
 
     @Override
-    protected String getLifeCycleTransition() {
+    public String getLifeCycleTransition() {
         return PlanItemTransition.INITIATE;
     }
 
     @Override
-    protected String getOperationName() {
+    public String getOperationName() {
         return "[Initiate plan item]";
     }
 

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
@@ -35,7 +34,6 @@ import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.history.HistoricProcessInstanceQuery;
 import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
-import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.test.Deployment;
 import org.flowable.engine.test.api.runtime.ProcessInstanceQueryTest;
@@ -220,7 +218,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(processInstanceQuery.count()).isEqualTo(5);
 
         List<HistoricProcessInstance> processInstances = processInstanceQuery.list();
-        assertThat(processInstances).isNotNull();
         assertThat(processInstances).hasSize(5);
 
         for (HistoricProcessInstance historicProcessInstance : processInstances) {
@@ -309,7 +306,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(processInstanceQuery.list().get(0).getDeploymentId()).isEqualTo(deployment.getId());
 
         List<HistoricProcessInstance> processInstances = processInstanceQuery.list();
-        assertThat(processInstances).isNotNull();
         assertThat(processInstances).hasSize(5);
 
         processInstanceQuery = historyService.createHistoricProcessInstanceQuery().deploymentId("invalid");
@@ -334,7 +330,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(processInstanceQuery.count()).isEqualTo(5);
 
         List<HistoricProcessInstance> processInstances = processInstanceQuery.list();
-        assertThat(processInstances).isNotNull();
         assertThat(processInstances).hasSize(5);
 
         deploymentIds = new ArrayList<>();
@@ -358,7 +353,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(taskInstanceQuery.count()).isEqualTo(5);
 
         List<HistoricTaskInstance> taskInstances = taskInstanceQuery.list();
-        assertThat(taskInstances).isNotNull();
         assertThat(taskInstances).hasSize(5);
 
         taskInstanceQuery = historyService.createHistoricTaskInstanceQuery().deploymentId("invalid");
@@ -382,7 +376,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(taskInstanceQuery.count()).isEqualTo(5);
 
         List<HistoricTaskInstance> taskInstances = taskInstanceQuery.list();
-        assertThat(taskInstances).isNotNull();
         assertThat(taskInstances).hasSize(5);
 
         deploymentIds.add("invalid");
@@ -410,7 +403,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(taskInstanceQuery.count()).isEqualTo(5);
 
         List<HistoricTaskInstance> taskInstances = taskInstanceQuery.list();
-        assertThat(taskInstances).isNotNull();
         assertThat(taskInstances).hasSize(5);
 
         taskInstanceQuery = historyService.createHistoricTaskInstanceQuery().or().deploymentId("invalid").endOr();
@@ -499,7 +491,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(taskInstanceQuery.count()).isEqualTo(5);
 
         List<HistoricTaskInstance> taskInstances = taskInstanceQuery.list();
-        assertThat(taskInstances).isNotNull();
         assertThat(taskInstances).hasSize(5);
 
         deploymentIds.add("invalid");
@@ -623,7 +614,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         // Test EQUAL on single string variable, should result in 2 matches
         HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().variableValueEquals("stringVar", "abcdef");
         List<HistoricProcessInstance> processInstances = query.list();
-        assertThat(processInstances).isNotNull();
         assertThat(processInstances).hasSize(2);
 
         // Test EQUAL on two string variables, should result in single match
@@ -784,7 +774,6 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         // Query on single short variable, should result in 2 matches
         HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().variableValueEquals("dateVar", date1);
         List<HistoricProcessInstance> processInstances = query.list();
-        assertThat(processInstances).isNotNull();
         assertThat(processInstances).hasSize(2);
 
         // Query on two short variables, should result in single value
@@ -987,7 +976,8 @@ public class HistoryServiceTest extends PluggableFlowableTestCase {
         assertThat(historicIdentityLink.getCreateTime()).isNotNull();
 
         managementService.executeCommand(commandContext -> {
-            CommandContextUtil.getHistoricTaskService().deleteHistoricTaskLogEntriesForProcessDefinition(processInstance.getProcessDefinitionId());
+            processEngineConfiguration.getTaskServiceConfiguration().getHistoricTaskService()
+                .deleteHistoricTaskLogEntriesForProcessDefinition(processInstance.getProcessDefinitionId());
             return null;
         });
     }

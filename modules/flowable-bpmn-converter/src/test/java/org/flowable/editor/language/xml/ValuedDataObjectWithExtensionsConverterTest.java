@@ -27,12 +27,12 @@ import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.SubProcess;
 import org.flowable.bpmn.model.ValuedDataObject;
-import org.junit.Test;
+import org.flowable.editor.language.xml.util.BpmnXmlConverterTest;
 
 /**
  * @see <a href="https://activiti.atlassian.net/browse/ACT-1847">https://activiti.atlassian.net/browse/ACT-1847</a>
  */
-public class ValuedDataObjectWithExtensionsConverterTest extends AbstractConverterTest {
+class ValuedDataObjectWithExtensionsConverterTest {
 
     protected static final String YOURCO_EXTENSIONS_NAMESPACE = "http://yourco/bpmn";
     protected static final String YOURCO_EXTENSIONS_PREFIX = "yourco";
@@ -109,25 +109,8 @@ public class ValuedDataObjectWithExtensionsConverterTest extends AbstractConvert
      * End of inner classes
      */
 
-    @Test
-    public void convertXMLToModel() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        validateModel(bpmnModel);
-    }
-
-    @Test
-    public void convertModelToXML() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        BpmnModel parsedModel = exportAndReadXMLFile(bpmnModel);
-        validateModel(parsedModel);
-    }
-
-    @Override
-    protected String getResource() {
-        return "valueddataobjectmodel_with_extensions.bpmn";
-    }
-
-    private void validateModel(BpmnModel model) {
+    @BpmnXmlConverterTest("valueddataobjectmodel_with_extensions.bpmn")
+    void validateModel(BpmnModel model) {
         FlowElement flowElement = model.getMainProcess().getFlowElement("start1");
         assertThat(flowElement)
                 .isInstanceOfSatisfying(StartEvent.class, startEvent -> {
@@ -147,7 +130,6 @@ public class ValuedDataObjectWithExtensionsConverterTest extends AbstractConvert
         assertThat(dataObj.getId()).isEqualTo("dObj1");
         assertThat(dataObj.getName()).isEqualTo("StringTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:string");
-        assertThat(dataObj.getValue()).isInstanceOf(String.class);
         assertThat(dataObj.getValue()).isEqualTo("Testing123");
 
         /*
@@ -187,7 +169,6 @@ public class ValuedDataObjectWithExtensionsConverterTest extends AbstractConvert
         assertThat(dataObj.getId()).isEqualTo("dObj2");
         assertThat(dataObj.getName()).isEqualTo("BooleanTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:boolean");
-        assertThat(dataObj.getValue()).isInstanceOf(Boolean.class);
         assertThat(dataObj.getValue()).isEqualTo(Boolean.TRUE);
 
         /*

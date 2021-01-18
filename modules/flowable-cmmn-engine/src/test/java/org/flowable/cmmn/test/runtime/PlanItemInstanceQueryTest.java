@@ -28,7 +28,6 @@ import org.flowable.cmmn.api.runtime.UserEventListenerInstance;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.engine.test.FlowableCmmnTestCase;
 import org.flowable.task.api.Task;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,24 +36,17 @@ import org.junit.Test;
  */
 public class PlanItemInstanceQueryTest extends FlowableCmmnTestCase {
 
-    protected String deploymentId;
     protected String caseDefinitionId;
 
     @Before
     public void deployCaseDefinition() {
-        this.deploymentId = cmmnRepositoryService.createDeployment()
+        String deploymentId = addDeploymentForAutoCleanup(cmmnRepositoryService.createDeployment()
                 .addClasspathResource("org/flowable/cmmn/test/runtime/PlanItemInstanceQueryTest.testPlanItemInstanceQuery.cmmn")
-                .deploy()
-                .getId();
+                .deploy());
         caseDefinitionId = cmmnRepositoryService.createCaseDefinitionQuery()
                 .deploymentId(deploymentId)
                 .singleResult()
                 .getId();
-    }
-
-    @After
-    public void deleteDeployment() {
-        cmmnRepositoryService.deleteDeployment(deploymentId, true);
     }
 
     @Test
@@ -86,7 +78,7 @@ public class PlanItemInstanceQueryTest extends FlowableCmmnTestCase {
         startInstances(1);
         List<PlanItemInstance> planItemInstances = cmmnRuntimeService.createPlanItemInstanceQuery().list();
         for (PlanItemInstance planItemInstance : planItemInstances) {
-            assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().planItemInstanceId(planItemInstance.getId()).count()).isEqualTo(1L);
+            assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().planItemInstanceId(planItemInstance.getId()).count()).isEqualTo(1);
         }
     }
 
@@ -647,6 +639,134 @@ public class PlanItemInstanceQueryTest extends FlowableCmmnTestCase {
                         tuple("oneexpandedstage4", "wait_repetition"), // FIXME: this plan item instance is missing
                         tuple("oneeventlistener1", "available"),
                         tuple("onehumantask1", "available")
+                );
+    }
+
+    @Test
+    public void testQueryVariableValueEqualsAndNotEquals() {
+        CaseInstance caseWithStringValue = cmmnRuntimeService.createCaseInstanceBuilder()
+                .caseDefinitionKey("testPlanItemInstanceQuery")
+                .name("With string value")
+                .start();
+
+        CaseInstance caseWithNullValue = cmmnRuntimeService.createCaseInstanceBuilder()
+                .caseDefinitionKey("testPlanItemInstanceQuery")
+                .name("With null value")
+                .start();
+
+        CaseInstance caseWithLongValue = cmmnRuntimeService.createCaseInstanceBuilder()
+                .caseDefinitionKey("testPlanItemInstanceQuery")
+                .name("With long value")
+                .start();
+
+        CaseInstance caseWithDoubleValue = cmmnRuntimeService.createCaseInstanceBuilder()
+                .caseDefinitionKey("testPlanItemInstanceQuery")
+                .name("With double value")
+                .start();
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().planItemInstanceName("Stage one").list())
+                .hasSize(4);
+
+        PlanItemInstance planItemWithStringValue = cmmnRuntimeService.createPlanItemInstanceQuery()
+                .caseInstanceId(caseWithStringValue.getId())
+                .planItemInstanceName("Stage one")
+                .singleResult();
+
+        assertThat(planItemWithStringValue).isNotNull();
+
+        PlanItemInstance planItemWithNullValue = cmmnRuntimeService.createPlanItemInstanceQuery()
+                .caseInstanceId(caseWithNullValue.getId())
+                .planItemInstanceName("Stage one")
+                .singleResult();
+
+        assertThat(planItemWithNullValue).isNotNull();
+
+        PlanItemInstance planItemWithLongValue = cmmnRuntimeService.createPlanItemInstanceQuery()
+                .caseInstanceId(caseWithLongValue.getId())
+                .planItemInstanceName("Stage one")
+                .singleResult();
+
+        assertThat(planItemWithLongValue).isNotNull();
+
+        PlanItemInstance planItemWithDoubleValue = cmmnRuntimeService.createPlanItemInstanceQuery()
+                .caseInstanceId(caseWithDoubleValue.getId())
+                .planItemInstanceName("Stage one")
+                .singleResult();
+
+        assertThat(planItemWithDoubleValue).isNotNull();
+
+        cmmnRuntimeService.setLocalVariable(planItemWithStringValue.getId(), "var", "TEST");
+        cmmnRuntimeService.setLocalVariable(planItemWithNullValue.getId(), "var", null);
+        cmmnRuntimeService.setLocalVariable(planItemWithLongValue.getId(), "var", 100L);
+        cmmnRuntimeService.setLocalVariable(planItemWithDoubleValue.getId(), "var", 45.55);
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueNotEquals("var", "TEST").list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithNullValue.getId()),
+                        tuple("Stage one", caseWithLongValue.getId()),
+                        tuple("Stage one", caseWithDoubleValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueEquals("var", "TEST").list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithStringValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueNotEquals("var", 100L).list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithStringValue.getId()),
+                        tuple("Stage one", caseWithNullValue.getId()),
+                        tuple("Stage one", caseWithDoubleValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueEquals("var", 100L).list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithLongValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueNotEquals("var", 45.55).list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithStringValue.getId()),
+                        tuple("Stage one", caseWithNullValue.getId()),
+                        tuple("Stage one", caseWithLongValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueEquals("var", 45.55).list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithDoubleValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueNotEquals("var", "test").list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithStringValue.getId()),
+                        tuple("Stage one", caseWithNullValue.getId()),
+                        tuple("Stage one", caseWithLongValue.getId()),
+                        tuple("Stage one", caseWithDoubleValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueNotEqualsIgnoreCase("var", "test").list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithNullValue.getId()),
+                        tuple("Stage one", caseWithLongValue.getId()),
+                        tuple("Stage one", caseWithDoubleValue.getId())
+                );
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueEquals("var", "test").list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .isEmpty();
+
+        assertThat(cmmnRuntimeService.createPlanItemInstanceQuery().variableValueEqualsIgnoreCase("var", "test").list())
+                .extracting(PlanItemInstance::getName, PlanItemInstance::getCaseInstanceId)
+                .containsExactlyInAnyOrder(
+                        tuple("Stage one", caseWithStringValue.getId())
                 );
     }
 

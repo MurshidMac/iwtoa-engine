@@ -15,6 +15,7 @@ package org.flowable.engine.test.api.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -43,6 +44,7 @@ import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceBuilder;
 import org.flowable.engine.test.Deployment;
+import org.flowable.job.api.Job;
 import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.junit.jupiter.api.Test;
@@ -74,8 +76,8 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
         vars.put("longString", longString.toString());
         runtimeService.startProcessInstanceByKey("oneTaskProcess", vars);
         org.flowable.task.api.Task task = taskService.createTaskQuery().includeProcessVariables().singleResult();
-        assertThat(task.getProcessVariables()).isNotNull();
-        assertThat(task.getProcessVariables().get("longString")).isEqualTo(longString.toString());
+        assertThat(task.getProcessVariables())
+                .containsEntry("longString", longString.toString());
     }
 
     @Test
@@ -101,7 +103,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
     public void testStartProcessInstanceByIdUnexistingId() {
         assertThatThrownBy(() -> runtimeService.startProcessInstanceById("unexistingId"))
                 .isExactlyInstanceOf(FlowableObjectNotFoundException.class)
-                .hasMessageContaining("No process definition found for id = 'unexistingId'");
+                .hasMessageContaining("no deployed process definition found with id 'unexistingId'");
     }
 
     @Test
@@ -204,6 +206,10 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
         assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count())
                 .as("Process is started, but its execution waits on the job").isZero();
 
+        Job job = managementService.createJobQuery().singleResult();
+        assertThat(job).isNotNull();
+        assertThat(job.isExclusive()).isFalse();
+
         JobTestHelper.waitForJobExecutorToProcessAllJobs(processEngineConfiguration, managementService, 2000, 200);
         assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).as("The task is created from the job execution")
                 .isEqualTo(1);
@@ -253,7 +259,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
         assertThatThrownBy(() -> processInstanceBuilder.processDefinitionId("nonExistingDefinitionId").startAsync())
             .isExactlyInstanceOf(FlowableObjectNotFoundException.class)
-            .hasMessage("No process definition found for id = 'nonExistingDefinitionId'");
+            .hasMessage("no deployed process definition found with id 'nonExistingDefinitionId'");
     }
 
     @Test
@@ -270,6 +276,22 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
         assertThat(processInstance.getProcessDefinitionKey()).isEqualTo(processDefinition.getKey());
         assertThat(processInstance.getProcessDefinitionVersion().intValue()).isEqualTo(processDefinition.getVersion());
         assertThat(processInstance.getProcessDefinitionName()).isEqualTo(processDefinition.getName());
+    }
+
+    @Test
+    @Deployment(resources = { "org/flowable/engine/test/api/twoTasksProcess.bpmn20.xml" })
+    public void testProcessInstanceDefinitionInformationWithoutProcessDefinitionName() {
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().singleResult();
+        ProcessInstanceBuilder processInstanceBuilder = runtimeService.createProcessInstanceBuilder();
+
+        ProcessInstance processInstance = processInstanceBuilder.processDefinitionKey("twoTasksProcess").start();
+
+        assertThat(processInstance).isNotNull();
+        assertThat(processInstance.getDeploymentId()).isEqualTo(processDefinition.getDeploymentId());
+        assertThat(processInstance.getProcessDefinitionId()).isEqualTo(processDefinition.getId());
+        assertThat(processInstance.getProcessDefinitionKey()).isEqualTo("twoTasksProcess");
+        assertThat(processInstance.getProcessDefinitionVersion().intValue()).isEqualTo(processDefinition.getVersion());
+        assertThat(processInstance.getProcessDefinitionName()).isNull();
     }
 
     @Test
@@ -469,7 +491,6 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess");
 
         List<String> activities = runtimeService.getActiveActivityIds(processInstance.getId());
-        assertThat(activities).isNotNull();
         assertThat(activities).hasSize(1);
     }
 
@@ -505,7 +526,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
         org.flowable.task.api.Task parallelUserTask = null;
         for (org.flowable.task.api.Task task : tasks) {
-            if (task.getName().equals("ParallelUserTask")) {
+            if ("ParallelUserTask".equals(task.getName())) {
                 parallelUserTask = task;
             }
         }
@@ -525,7 +546,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
         org.flowable.task.api.Task beforeErrorUserTask = null;
         for (org.flowable.task.api.Task task : tasks) {
-            if (task.getName().equals("BeforeError")) {
+            if ("BeforeError".equals(task.getName())) {
                 beforeErrorUserTask = task;
             }
         }
@@ -541,7 +562,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
         org.flowable.task.api.Task afterErrorUserTask = null;
         for (org.flowable.task.api.Task task : tasks) {
-            if (task.getName().equals("AfterError")) {
+            if ("AfterError".equals(task.getName())) {
                 afterErrorUserTask = task;
             }
         }

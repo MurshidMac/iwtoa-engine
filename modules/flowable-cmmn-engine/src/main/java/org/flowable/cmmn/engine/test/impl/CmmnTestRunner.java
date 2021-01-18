@@ -21,8 +21,12 @@ import org.flowable.cmmn.api.CmmnRepositoryService;
 import org.flowable.cmmn.api.repository.CmmnDeploymentBuilder;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.deployer.CmmnDeployer;
+import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.impl.db.SchemaManager;
+import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.test.EnsureCleanDbUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -119,7 +123,7 @@ public class CmmnTestRunner extends BlockJUnit4ClassRunner {
                 } finally {
 
                     if (deploymentId != null) {
-                        deleteDeployment(deploymentId);
+                        CmmnTestHelper.deleteDeployment(cmmnEngineConfiguration, deploymentId);
                         deploymentId = null;
                     }
 
@@ -131,7 +135,7 @@ public class CmmnTestRunner extends BlockJUnit4ClassRunner {
                         }
                     }
 
-                    if (errors == null || errors.isEmpty()) {
+                    if (errors.isEmpty()) {
                         assertDatabaseEmpty(method);
                     }
 
@@ -165,6 +169,13 @@ public class CmmnTestRunner extends BlockJUnit4ClassRunner {
             for (String resource : resources) {
                 deploymentBuilder.addClasspathResource(resource);
             }
+
+            String[] extraResources = deploymentAnnotation.extraResources();
+            if (extraResources != null && extraResources.length > 0) {
+                for (String extraResource : extraResources) {
+                    deploymentBuilder.addClasspathResource(extraResource);
+                }
+            }
             
             if (StringUtils.isNotEmpty(deploymentAnnotation.tenantId())) {
                 deploymentBuilder.tenantId(deploymentAnnotation.tenantId());
@@ -188,19 +199,25 @@ public class CmmnTestRunner extends BlockJUnit4ClassRunner {
         }
         return className + "." + method.getName() + ".cmmn";
     }
-    
-    protected void deleteDeployment(String deploymentId) {
-        cmmnEngineConfiguration.getCmmnRepositoryService().deleteDeployment(deploymentId, true);
-    }
-    
+
     protected void assertDatabaseEmpty(FrameworkMethod method) {
         EnsureCleanDbUtils.assertAndEnsureCleanDb(
-                getTestClass().getName() + "." + method.getName(),
-                LOGGER,
-                cmmnEngineConfiguration,
-                TABLENAMES_EXCLUDED_FROM_DB_CLEAN_CHECK,
-                true,
-                null
+            getTestClass().getName() + "." + method.getName(),
+            LOGGER,
+            cmmnEngineConfiguration,
+            TABLENAMES_EXCLUDED_FROM_DB_CLEAN_CHECK,
+            true,
+            new Command<Void>() {
+
+                @Override
+                public Void execute(CommandContext commandContext) {
+                    SchemaManager schemaManager = CommandContextUtil.getCmmnEngineConfiguration(commandContext).getSchemaManager();
+                    schemaManager.schemaDrop();
+                    schemaManager.schemaCreate();
+                    return null;
+                }
+            }
+
         );
     }
 

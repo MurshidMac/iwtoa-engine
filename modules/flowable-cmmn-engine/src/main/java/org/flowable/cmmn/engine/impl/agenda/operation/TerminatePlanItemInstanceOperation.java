@@ -33,20 +33,30 @@ public class TerminatePlanItemInstanceOperation extends AbstractMovePlanItemInst
     }
 
     @Override
-    protected String getNewState() {
+    public String getNewState() {
         return PlanItemInstanceState.TERMINATED;
     }
 
     @Override
-    protected String getLifeCycleTransition() {
+    public String getLifeCycleTransition() {
         return PlanItemTransition.TERMINATE;
     }
     
     @Override
-    protected boolean isEvaluateRepetitionRule() {
+    public boolean isEvaluateRepetitionRule() {
         return false;
     }
     
+    @Override
+    protected boolean shouldAggregateForSingleInstance() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldAggregateForMultipleInstances() {
+        return false;
+    }
+
     @Override
     protected void internalExecute() {
         planItemInstanceEntity.setEndedTime(getCurrentTime(commandContext));
@@ -55,8 +65,20 @@ public class TerminatePlanItemInstanceOperation extends AbstractMovePlanItemInst
     }
 
     @Override
-    protected String getOperationName() {
+    public String getOperationName() {
         return "[Terminate plan item]";
     }
-    
+
+    public String getExitType() {
+        return exitType;
+    }
+    public void setExitType(String exitType) {
+        this.exitType = exitType;
+    }
+    public String getExitEventType() {
+        return exitEventType;
+    }
+    public void setExitEventType(String exitEventType) {
+        this.exitEventType = exitEventType;
+    }
 }

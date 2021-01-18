@@ -23,29 +23,12 @@ import org.flowable.bpmn.model.ExtensionAttribute;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.Process;
 import org.flowable.bpmn.model.UserTask;
-import org.junit.Test;
+import org.flowable.editor.language.xml.util.BpmnXmlConverterTest;
 
-public class CustomNamespaceAttributeConverterTest extends AbstractConverterTest {
+class CustomNamespaceAttributeConverterTest {
 
-    @Test
-    public void convertXMLToModel() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        validateModel(bpmnModel);
-    }
-
-    @Test
-    public void convertModelToXML() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        BpmnModel parsedModel = exportAndReadXMLFile(bpmnModel);
-        validateModel(parsedModel);
-    }
-
-    @Override
-    protected String getResource() {
-        return "customnamespaceattributemodel.bpmn";
-    }
-
-    private void validateModel(BpmnModel model) {
+    @BpmnXmlConverterTest("customnamespaceattributemodel.bpmn")
+    void validateModel(BpmnModel model) {
         Process process = model.getMainProcess();
         assertThat(process.getAttributes()).isNotNull();
         List<ExtensionAttribute> attributes = process.getAttributes().get("version");
@@ -55,15 +38,12 @@ public class CustomNamespaceAttributeConverterTest extends AbstractConverterTest
                 .containsExactly(tuple("http://custom.org/bpmn", "custom", "version", "9"));
 
         FlowElement flowElement = model.getMainProcess().getFlowElement("usertask");
-        assertThat(flowElement).isNotNull();
         assertThat(flowElement).isInstanceOf(UserTask.class);
         assertThat(flowElement.getId()).isEqualTo("usertask");
+        assertThat(flowElement.getName()).isEqualTo("User Task");
         UserTask userTask = (UserTask) flowElement;
-        assertThat(userTask.getId()).isEqualTo("usertask");
-        assertThat(userTask.getName()).isEqualTo("User Task");
 
         Map<String, List<ExtensionAttribute>> attributesMap = userTask.getAttributes();
-        assertThat(attributesMap).isNotNull();
         assertThat(attributesMap).hasSize(2);
 
         attributes = attributesMap.get("id");

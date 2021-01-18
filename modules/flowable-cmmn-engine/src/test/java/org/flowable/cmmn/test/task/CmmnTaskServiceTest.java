@@ -23,12 +23,12 @@ import java.util.stream.Stream;
 import org.flowable.cmmn.api.history.HistoricCaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
-import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.interceptor.CreateHumanTaskAfterContext;
 import org.flowable.cmmn.engine.interceptor.CreateHumanTaskBeforeContext;
 import org.flowable.cmmn.engine.interceptor.CreateHumanTaskInterceptor;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.engine.test.FlowableCmmnTestCase;
+import org.flowable.cmmn.engine.test.impl.CmmnHistoryTestHelper;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.history.HistoryLevel;
@@ -66,7 +66,7 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
                         Task::getAssignee)
                 .containsExactly("The Task", "This is a test documentation", "johnDoe");
 
-        if (cmmnEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
             HistoricTaskInstance historicTaskInstance = cmmnHistoryService.createHistoricTaskInstanceQuery().caseInstanceId(caseInstance.getId())
                     .singleResult();
             assertThat(historicTaskInstance).isNotNull();
@@ -76,7 +76,7 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
         cmmnTaskService.complete(task.getId());
         assertCaseInstanceEnded(caseInstance);
 
-        if (cmmnEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
             HistoricTaskInstance historicTaskInstance = cmmnHistoryService.createHistoricTaskInstanceQuery().caseInstanceId(caseInstance.getId())
                     .singleResult();
             assertThat(historicTaskInstance)
@@ -104,7 +104,7 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
         cmmnTaskService.complete(task.getId());
         assertCaseInstanceEnded(caseInstance);
 
-        if (cmmnEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
             HistoricTaskInstance historicTaskInstance = cmmnHistoryService.createHistoricTaskInstanceQuery().caseInstanceId(caseInstance.getId())
                     .singleResult();
             assertThat(historicTaskInstance)
@@ -155,9 +155,12 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
                 "${variableToUpdate}", "updatedVariableValue"
                 )
         );
-        HistoricCaseInstance historicCaseInstance = cmmnHistoryService.createHistoricCaseInstanceQuery().caseInstanceId(caseInstance.getId()).
+
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+            HistoricCaseInstance historicCaseInstance = cmmnHistoryService.createHistoricCaseInstanceQuery().caseInstanceId(caseInstance.getId()).
                 includeCaseVariables().singleResult();
-        assertThat(historicCaseInstance.getCaseVariables().get("variableToUpdate")).isEqualTo("updatedVariableValue");
+            assertThat(historicCaseInstance.getCaseVariables()).containsEntry("variableToUpdate", "updatedVariableValue");
+        }
     }
 
     @Test
@@ -173,9 +176,12 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
                 "${variableToUpdate}", "updatedVariableValue"
                 )
         );
-        HistoricTaskInstance historicTaskInstance = cmmnHistoryService.createHistoricTaskInstanceQuery().caseInstanceId(caseInstance.getId()).
+
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+            HistoricTaskInstance historicTaskInstance = cmmnHistoryService.createHistoricTaskInstanceQuery().caseInstanceId(caseInstance.getId()).
                 includeTaskLocalVariables().singleResult();
-        assertThat(historicTaskInstance.getTaskLocalVariables().get("variableToUpdate")).isEqualTo("updatedVariableValue");
+            assertThat(historicTaskInstance.getTaskLocalVariables()).containsEntry("variableToUpdate", "updatedVariableValue");
+        }
     }
 
     @Test
@@ -192,7 +198,7 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
                 caseInstanceId(caseInstance.getId()).
                 includeCaseVariables().
                 singleResult();
-        assertThat(updatedCaseInstance.getCaseVariables().get("varToUpdate")).isEqualTo("newValue");
+        assertThat(updatedCaseInstance.getCaseVariables()).containsEntry("varToUpdate", "newValue");
     }
 
     @Test
@@ -213,37 +219,8 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
                         ScopeTypes.CMMN);
 
         cmmnRuntimeService.triggerPlanItemInstance(planItemInstance.getId());
-        assertThat(cmmnTaskService.createTaskQuery().count()).isEqualTo(0);
+        assertThat(cmmnTaskService.createTaskQuery().count()).isZero();
         assertCaseInstanceEnded(caseInstance);
-    }
-
-    @Test
-    public void testCreateTaskWithBuilderAndScopes() {
-        Task task = cmmnTaskService.createTaskBuilder().name("builderTask").
-                scopeId("testScopeId").
-                scopeType("testScopeType").
-                create();
-
-        try {
-            Task taskFromQuery = cmmnTaskService.createTaskQuery().taskId(task.getId()).singleResult();
-            assertThat(taskFromQuery.getScopeId()).isEqualTo("testScopeId");
-            assertThat(taskFromQuery.getScopeType()).isEqualTo("testScopeType");
-        } finally {
-            cmmnTaskService.deleteTask(task.getId(), true);
-        }
-    }
-
-    @Test
-    public void testCreateTaskWithBuilderWithoutScopes() {
-        Task task = cmmnTaskService.createTaskBuilder().name("builderTask").
-                create();
-        try {
-            Task taskFromQuery = cmmnTaskService.createTaskQuery().taskId(task.getId()).singleResult();
-            assertThat(taskFromQuery.getScopeId()).isNull();
-            assertThat(taskFromQuery.getScopeType()).isNull();
-        } finally {
-            cmmnTaskService.deleteTask(task.getId(), true);
-        }
     }
 
     @Test
@@ -256,7 +233,7 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
         CommandExecutor commandExecutor = cmmnEngine.getCmmnEngineConfiguration().getCommandExecutor();
 
         List<EntityLink> entityLinks = commandExecutor.execute(commandContext -> {
-            EntityLinkService entityLinkService = CommandContextUtil.getEntityLinkService(commandContext);
+            EntityLinkService entityLinkService = cmmnEngineConfiguration.getEntityLinkServiceConfiguration().getEntityLinkService();
 
             return entityLinkService.findEntityLinksByScopeIdAndType(caseInstance.getId(), ScopeTypes.CMMN, EntityLinkType.CHILD);
         });
@@ -268,7 +245,7 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
         assertCaseInstanceEnded(caseInstance);
 
         List<HistoricEntityLink> entityLinksByScopeIdAndType = commandExecutor.execute(commandContext -> {
-            HistoricEntityLinkService historicEntityLinkService = CommandContextUtil.getHistoricEntityLinkService(commandContext);
+            HistoricEntityLinkService historicEntityLinkService = cmmnEngineConfiguration.getEntityLinkServiceConfiguration().getHistoricEntityLinkService();
 
             return historicEntityLinkService.findHistoricEntityLinksByScopeIdAndScopeType(caseInstance.getId(), ScopeTypes.CMMN, EntityLinkType.CHILD);
         });

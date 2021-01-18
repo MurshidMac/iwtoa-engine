@@ -453,7 +453,7 @@ It’s possible to support additional variable-types with a custom JSON represen
 
 ## Deployment
 
-**When using tomcat, please read [Usage in Tomcat](restUsageInTomcat).**
+**When using Tomcat, please read [Usage in Tomcat](#usage-in-tomcat).**
 
 ### List of Deployments
 
@@ -1056,7 +1056,7 @@ Only one of +caseDefinitionId+ or +caseDefinitionKey+  can be used in the reques
 |caseDefinitionId|No|String|Only return case instances with the given case definition id.|
 |businessKey|No|String|Only return case instances with the given businessKey.|
 |involvedUser|No|String|Only return case instances in which the given user is involved.|
-|includecaseVariables|No|Boolean|Indication to include case variables in the result.
+|includeCaseVariables|No|Boolean|Indication to include case variables in the result.
 |tenantId|No|String|Only return case instances with the given tenantId.
 |tenantIdLike|No|String|Only return case instances with a tenantId like the given value.
 |withoutTenantId|No|Boolean|If +true+, only returns case instances without a tenantId set. If +false+, the +withoutTenantId+ parameter is ignored.
@@ -1281,7 +1281,7 @@ In case the variable is a binary variable or serializable, the +valueUrl+ points
 
     POST cmmn-runtime/case-instances/{caseInstanceId}/variables
 
-    PUT casecase-instancesruntime/case-instances/{caseInstanceId}/variables
+    PUT cmmn-runtime/case-instances/{caseInstanceId}/variables
 
 
 When using +POST+, all variables that are passed are created. In case one of the variables already exists on the case instance, the request results in an error (409 - CONFLICT). When +PUT+ is used, nonexistent variables are created on the case-instance and existing ones are overridden without any error.
@@ -1317,7 +1317,7 @@ Any number of variables can be passed into the request body array.
 
 ### Update a single variable on a case instance
 
-    PUT casecase-instancesruntime/case-instances/{caseInstanceId}/variables/{variableName}
+    PUT cmmn-runtime/case-instances/{caseInstanceId}/variables/{variableName}
 
 |Parameter|Required|Value|Description|
 | - | - | - | - | 
@@ -1408,7 +1408,7 @@ The request should be of type +multipart/form-data+. There should be a single fi
 | - | - | - | - |
 |caseInstanceId|No|String|The case instance id for which the stage overview is retrieved.|    
 
-*Success reponse body* {
+*Success response body* {
 
 ```
 [

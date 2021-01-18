@@ -14,6 +14,7 @@ package org.flowable.engine.test.eventregistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.HashMap;
 import java.util.List;
@@ -176,6 +177,119 @@ public class BpmnEventRegistryConsumerTest extends FlowableEventRegistryBpmnTest
 
     @Test
     @Deployment
+    public void testReceiveEventTaskNoCorrelation() {
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("process");
+
+        EventSubscription eventSubscription = runtimeService.createEventSubscriptionQuery().activityId("task").singleResult();
+        assertThat(eventSubscription).isNotNull();
+        assertThat(eventSubscription.getProcessInstanceId()).isEqualTo(processInstance.getId());
+        assertThat(eventSubscription.getEventType()).isEqualTo("myEvent");
+
+        inboundEventChannelAdapter.triggerTestEvent();
+        Task afterTask = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
+        assertThat(afterTask.getTaskDefinitionKey()).isEqualTo("taskAfterTask");
+
+        assertThat(runtimeService.createEventSubscriptionQuery().activityId("task").singleResult()).isNull();
+    }
+
+    @Test
+    @Deployment
+    public void testReceiveEventTaskWithCorrelationAndPayload() {
+        Map<String, Object> variableMap = new HashMap<>();
+        variableMap.put("customerIdVar", "kermit");
+        ProcessInstance kermitProcessInstance = runtimeService.startProcessInstanceByKey("process", variableMap);
+
+        variableMap.clear();
+        variableMap.put("customerIdVar", "gonzo");
+        ProcessInstance gonzoProcessInstance = runtimeService.startProcessInstanceByKey("process", variableMap);
+
+        inboundEventChannelAdapter.triggerTestEvent("kermit");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isZero();
+
+        inboundEventChannelAdapter.triggerTestEvent("kermit");
+        Task afterTask = taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).singleResult();
+        assertThat(afterTask.getTaskDefinitionKey()).isEqualTo("taskAfterTask");
+
+        assertThat(runtimeService.getVariables(kermitProcessInstance.getId()))
+            .containsOnly(
+                entry("customerIdVar", "kermit"),
+                entry("payload1", "Hello World")
+            );
+
+        inboundEventChannelAdapter.triggerTestEvent("fozzie");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isZero();
+
+        inboundEventChannelAdapter.triggerTestEvent("gonzo");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isEqualTo(1);
+
+        inboundEventChannelAdapter.triggerTestEvent("kermit");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isEqualTo(1);
+
+    }
+
+    @Test
+    @Deployment
+    public void testIntermediateCatchEventNoCorrelation() {
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("process");
+
+        EventSubscription eventSubscription = runtimeService.createEventSubscriptionQuery().activityId("catchEvent").singleResult();
+        assertThat(eventSubscription).isNotNull();
+        assertThat(eventSubscription.getProcessInstanceId()).isEqualTo(processInstance.getId());
+        assertThat(eventSubscription.getEventType()).isEqualTo("myEvent");
+
+        inboundEventChannelAdapter.triggerTestEvent();
+        Task afterTask = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
+        assertThat(afterTask.getTaskDefinitionKey()).isEqualTo("taskAfterTask");
+
+        assertThat(runtimeService.createEventSubscriptionQuery().activityId("task").singleResult()).isNull();
+    }
+
+    @Test
+    @Deployment
+    public void testIntermediateCatchEventWithCorrelationAndPayload() {
+        Map<String, Object> variableMap = new HashMap<>();
+        variableMap.put("customerIdVar", "kermit");
+        ProcessInstance kermitProcessInstance = runtimeService.startProcessInstanceByKey("process", variableMap);
+
+        variableMap.clear();
+        variableMap.put("customerIdVar", "gonzo");
+        ProcessInstance gonzoProcessInstance = runtimeService.startProcessInstanceByKey("process", variableMap);
+
+        inboundEventChannelAdapter.triggerTestEvent("kermit");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isZero();
+
+        inboundEventChannelAdapter.triggerTestEvent("kermit");
+        Task afterTask = taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).singleResult();
+        assertThat(afterTask.getTaskDefinitionKey()).isEqualTo("taskAfterTask");
+
+        assertThat(runtimeService.getVariables(kermitProcessInstance.getId()))
+            .containsOnly(
+                entry("customerIdVar", "kermit"),
+                entry("payload1", "Hello World")
+            );
+
+        inboundEventChannelAdapter.triggerTestEvent("fozzie");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isZero();
+
+        inboundEventChannelAdapter.triggerTestEvent("gonzo");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isEqualTo(1);
+
+        inboundEventChannelAdapter.triggerTestEvent("kermit");
+        assertThat(taskService.createTaskQuery().processInstanceId(kermitProcessInstance.getId()).count()).isEqualTo(1);
+        assertThat(taskService.createTaskQuery().processInstanceId(gonzoProcessInstance.getId()).count()).isEqualTo(1);
+
+    }
+
+
+    @Test
+    @Deployment
     public void testProcessStartNoCorrelationParameter() {
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey("process").singleResult();
         assertThat(processDefinition).isNotNull();
@@ -187,7 +301,7 @@ public class BpmnEventRegistryConsumerTest extends FlowableEventRegistryBpmnTest
         assertThat(eventSubscription).isNotNull();
         assertThat(eventSubscription.getEventType()).isEqualTo("myEvent");
 
-        assertThat(runtimeService.createProcessInstanceQuery().list()).hasSize(0);
+        assertThat(runtimeService.createProcessInstanceQuery().list()).isEmpty();
 
         for (int i = 1; i <= 5; i++) {
             inboundEventChannelAdapter.triggerTestEvent();
@@ -208,10 +322,10 @@ public class BpmnEventRegistryConsumerTest extends FlowableEventRegistryBpmnTest
         assertThat(eventSubscription).isNotNull();
         assertThat(eventSubscription.getEventType()).isEqualTo("myEvent");
 
-        assertThat(runtimeService.createProcessInstanceQuery().list()).hasSize(0);
+        assertThat(runtimeService.createProcessInstanceQuery().list()).isEmpty();
         
         inboundEventChannelAdapter.triggerTestEvent("anotherCustomer");
-        assertThat(runtimeService.createProcessInstanceQuery().list()).hasSize(0);
+        assertThat(runtimeService.createProcessInstanceQuery().list()).isEmpty();
 
         for (int i = 1; i <= 5; i++) {
             inboundEventChannelAdapter.triggerTestEvent("testCustomer");
@@ -232,7 +346,7 @@ public class BpmnEventRegistryConsumerTest extends FlowableEventRegistryBpmnTest
         assertThat(eventSubscription).isNotNull();
         assertThat(eventSubscription.getEventType()).isEqualTo("myEvent");
 
-        assertThat(runtimeService.createProcessInstanceQuery().list()).hasSize(0);
+        assertThat(runtimeService.createProcessInstanceQuery().list()).isEmpty();
         
         inboundEventChannelAdapter.triggerTestEvent("payloadStartCustomer");
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processDefinitionKey("process").singleResult();
@@ -257,6 +371,65 @@ public class BpmnEventRegistryConsumerTest extends FlowableEventRegistryBpmnTest
             inboundEventChannelAdapter.triggerTestEvent("anotherTestCustomer");
             assertThat(runtimeService.createProcessInstanceQuery().list()).hasSize(2);
         }
+    }
+
+    @Test
+    public void testRedeployDefinitionWithRuntimeEventSubscriptions() {
+        org.flowable.engine.repository.Deployment deployment1 = repositoryService.createDeployment()
+            .addClasspathResource("org/flowable/engine/test/eventregistry/BpmnEventRegistryConsumerTest.testRedeploy.bpmn20.xml")
+            .deploy();
+        deploymentIdsForAutoCleanup.add(deployment1.getId());
+        ProcessDefinition processDefinition1 = repositoryService.createProcessDefinitionQuery().deploymentId(deployment1.getId()).singleResult();
+
+        // After deploying, there should be one eventsubscription: to start the instance
+        assertThat( runtimeService.createEventSubscriptionQuery().list())
+            .extracting(EventSubscription::getEventType, EventSubscription::getProcessDefinitionId, EventSubscription::getProcessInstanceId)
+            .containsOnly(tuple("myEvent", processDefinition1.getId(), null));
+
+        // After the instance is started, there should be one additional eventsubscription
+        inboundEventChannelAdapter.triggerTestEvent();
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().singleResult();
+        assertThat(processInstance.getProcessDefinitionId()).isEqualTo(processDefinition1.getId());
+
+        // Starting is always async
+        managementService.executeJob(managementService.createJobQuery().processDefinitionId(processDefinition1.getId()).singleResult().getId());
+
+        assertThat( runtimeService.createEventSubscriptionQuery().list())
+            .extracting(EventSubscription::getEventType, EventSubscription::getProcessDefinitionId, EventSubscription::getProcessInstanceId)
+            .containsOnly(
+                tuple("myEvent", processDefinition1.getId(), null),
+                tuple("myEvent", processDefinition1.getId(), processInstance.getId())
+            );
+
+        // Redeploying the same definition:
+        // Event subscription to start should reflect new definition id
+        // Existing subscription for boundary event should remain
+        org.flowable.engine.repository.Deployment deployment2 = repositoryService.createDeployment()
+            .addClasspathResource("org/flowable/engine/test/eventregistry/BpmnEventRegistryConsumerTest.testRedeploy.bpmn20.xml")
+            .deploy();
+        deploymentIdsForAutoCleanup.add(deployment2.getId());
+        ProcessDefinition processDefinition2 = repositoryService.createProcessDefinitionQuery().deploymentId(deployment2.getId()).singleResult();
+
+        assertThat( runtimeService.createEventSubscriptionQuery().list())
+            .extracting(EventSubscription::getEventType, EventSubscription::getProcessDefinitionId, EventSubscription::getProcessInstanceId)
+            .containsOnly(
+                tuple("myEvent", processDefinition2.getId(), null), // note the new definition id
+                tuple("myEvent", processDefinition1.getId(), processInstance.getId()) // note the original id
+            );
+
+        // Triggering the instance event subscription should continue the case instance like before
+        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).list())
+            .extracting(Task::getName)
+            .containsOnly("My task");
+
+        inboundEventChannelAdapter.triggerTestEvent();
+
+        // Ended thanks to boundary event
+        assertProcessEnded(processInstance.getId());
+
+        assertThat(runtimeService.createEventSubscriptionQuery().list())
+            .extracting(EventSubscription::getEventType, EventSubscription::getProcessDefinitionId, EventSubscription::getProcessInstanceId)
+            .containsOnly(tuple("myEvent", processDefinition2.getId(), null));
     }
 
     private static class TestInboundEventChannelAdapter implements InboundEventChannelAdapter {

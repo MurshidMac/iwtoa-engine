@@ -12,13 +12,14 @@
  */
 package org.flowable.bpmn.converter.export;
 
+import java.util.List;
+
+import javax.xml.stream.XMLStreamWriter;
+
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.constants.BpmnXMLConstants;
 import org.flowable.bpmn.converter.util.BpmnXMLUtil;
 import org.flowable.bpmn.model.MapExceptionEntry;
-
-import javax.xml.stream.XMLStreamWriter;
-import java.util.List;
 
 public class MapExceptionExport implements BpmnXMLConstants {
 
@@ -36,6 +37,7 @@ public class MapExceptionExport implements BpmnXMLConstants {
 
                 BpmnXMLUtil.writeDefaultAttribute(MAP_EXCEPTION_ERRORCODE, mapException.getErrorCode(), xtw);
                 BpmnXMLUtil.writeDefaultAttribute(MAP_EXCEPTION_ANDCHILDREN, Boolean.toString(mapException.isAndChildren()), xtw);
+                BpmnXMLUtil.writeDefaultAttribute(MAP_EXCEPTION_ROOTCAUSE, mapException.getRootCause(), xtw);
 
                 if (StringUtils.isNotEmpty(mapException.getClassName())) {
                     xtw.writeCData(mapException.getClassName());

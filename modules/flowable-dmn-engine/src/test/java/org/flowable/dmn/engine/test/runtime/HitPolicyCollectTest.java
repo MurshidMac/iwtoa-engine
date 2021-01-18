@@ -13,12 +13,13 @@
 package org.flowable.dmn.engine.test.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.util.List;
 import java.util.Map;
 
 import org.flowable.dmn.api.DecisionExecutionAuditContainer;
-import org.flowable.dmn.api.DmnRuleService;
+import org.flowable.dmn.api.DmnDecisionService;
 import org.flowable.dmn.engine.DmnEngine;
 import org.flowable.dmn.engine.test.DmnDeployment;
 import org.flowable.dmn.engine.test.FlowableDmnRule;
@@ -38,7 +39,7 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyNoAggregator() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         List<Map<String, Object>> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
@@ -55,7 +56,7 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyNoAggregatorCompound() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         List<Map<String, Object>> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
@@ -79,7 +80,7 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyWithAggregatorMultipleOutputs() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         DecisionExecutionAuditContainer result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
@@ -96,7 +97,7 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyWithAggregatorWrongOutputType() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         DecisionExecutionAuditContainer result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
@@ -113,15 +114,15 @@ public class HitPolicyCollectTest {
     public void collectHitPolicySUM() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 5)
                 .executeWithSingleResult();
 
-        assertThat(result.keySet()).hasSize(1);
-        assertThat(result.get("outputVariable1")).isEqualTo(90D);
+        assertThat(result)
+                .containsExactly(entry("outputVariable1", 90D));
     }
 
     @Test
@@ -129,15 +130,15 @@ public class HitPolicyCollectTest {
     public void collectHitPolicySUM_force_DMN11() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 5)
                 .executeWithSingleResult();
 
-        assertThat(result.keySet()).hasSize(1);
-        assertThat(result.get("outputVariable1")).isEqualTo(60D);
+        assertThat(result)
+                .containsExactly(entry("outputVariable1", 60D));
     }
 
     @Test
@@ -145,15 +146,15 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyMIN() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 5)
                 .executeWithSingleResult();
 
-        assertThat(result.keySet()).hasSize(1);
-        assertThat(result.get("outputVariable1")).isEqualTo(10D);
+        assertThat(result)
+                .containsExactly(entry("outputVariable1", 10D));
     }
 
     @Test
@@ -161,15 +162,15 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyMAX() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 5)
                 .executeWithSingleResult();
 
-        assertThat(result.keySet()).hasSize(1);
-        assertThat(result.get("outputVariable1")).isEqualTo(30D);
+        assertThat(result)
+                .containsExactly(entry("outputVariable1", 30D));
     }
 
     @Test
@@ -177,15 +178,15 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyCOUNT() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 5)
                 .executeWithSingleResult();
 
-        assertThat(result.keySet()).hasSize(1);
-        assertThat(result.get("outputVariable1")).isEqualTo(4D);
+        assertThat(result)
+                .containsExactly(entry("outputVariable1", 4D));
     }
 
     @Test
@@ -193,15 +194,15 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyCOUNT_force_DMN11() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 5)
                 .executeWithSingleResult();
 
-        assertThat(result.keySet()).hasSize(1);
-        assertThat(result.get("outputVariable1")).isEqualTo(3D);
+        assertThat(result)
+                .containsExactly(entry("outputVariable1", 3D));
     }
 
     @Test
@@ -209,7 +210,7 @@ public class HitPolicyCollectTest {
     public void collectHitPolicyCOUNTNoResults() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")

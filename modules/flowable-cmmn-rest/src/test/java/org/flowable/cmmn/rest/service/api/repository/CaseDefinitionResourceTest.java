@@ -72,10 +72,8 @@ public class CaseDefinitionResourceTest extends BaseSpringRestTestCase {
         assertThat(responseNode.get("graphicalNotationDefined").booleanValue()).isFalse();
 
         // Check URL's
-        assertThat(URLDecoder.decode(responseNode.get("resource").textValue(), "UTF-8").endsWith(
-                CmmnRestUrls
-                        .createRelativeResourceUrl(CmmnRestUrls.URL_DEPLOYMENT_RESOURCE, caseDefinition.getDeploymentId(), caseDefinition.getResourceName())))
-                .isTrue();
+        assertThat(URLDecoder.decode(responseNode.get("resource").textValue(), "UTF-8")).endsWith(CmmnRestUrls
+                .createRelativeResourceUrl(CmmnRestUrls.URL_DEPLOYMENT_RESOURCE, caseDefinition.getDeploymentId(), caseDefinition.getResourceName()));
     }
 
     /**
@@ -133,7 +131,6 @@ public class CaseDefinitionResourceTest extends BaseSpringRestTestCase {
         // Check "OK" status
         String content = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
         closeResponse(response);
-        assertThat(content).isNotNull();
         assertThat(content).contains("This is a test documentation");
     }
 

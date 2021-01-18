@@ -18,7 +18,7 @@ import org.apache.ibatis.datasource.pooled.PoolState;
 import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.flowable.cmmn.engine.CmmnEngine;
 import org.flowable.cmmn.engine.impl.cfg.StandaloneInMemCmmnEngineConfiguration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Zheng Ji
@@ -45,7 +45,7 @@ public class ForceCloseMybatisConnectionPoolTest {
         cmmnEngine.close();
 
         // the idle connections are closed
-        assertThat(state.getIdleConnectionCount()).isEqualTo(0);
+        assertThat(state.getIdleConnectionCount()).isZero();
     }
 
     @Test
@@ -71,7 +71,7 @@ public class ForceCloseMybatisConnectionPoolTest {
         assertThat(state.getIdleConnectionCount()).isPositive();
 
         pooledDataSource.forceCloseAll();
-        assertThat(state.getIdleConnectionCount()).isEqualTo(0);
+        assertThat(state.getIdleConnectionCount()).isZero();
     }
 
 }

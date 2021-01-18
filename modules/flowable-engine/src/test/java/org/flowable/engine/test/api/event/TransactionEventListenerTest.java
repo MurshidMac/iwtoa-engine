@@ -95,8 +95,11 @@ public class TransactionEventListenerTest extends PluggableFlowableTestCase {
             // During the async history execution it is possible that some historic jobs are inserted again (to be retried) therefore using hasSizeGreaterThan
             assertThat(TestTransactionEventListener.eventsReceived.get(FlowableEngineEventType.ENTITY_CREATED.name())).hasSizeGreaterThanOrEqualTo(historyCreatedEvents);
             assertThat(TestTransactionEventListener.eventsReceived.get(FlowableEngineEventType.ENTITY_INITIALIZED.name())).hasSizeGreaterThanOrEqualTo(historyCreatedEvents);
-            assertThat(TestTransactionEventListener.eventsReceived.get(FlowableEngineEventType.PROCESS_STARTED.name())).isNull();
-            assertThat(TestTransactionEventListener.eventsReceived.get(FlowableEngineEventType.TASK_CREATED.name())).isNull();
+            assertThat(TestTransactionEventListener.eventsReceived)
+                    .doesNotContainKeys(
+                            FlowableEngineEventType.PROCESS_STARTED.name(),
+                            FlowableEngineEventType.TASK_CREATED.name()
+            );
 
         } else {
             assertThat(TestTransactionEventListener.eventsReceived.get(FlowableEngineEventType.ENTITY_CREATED.name())).hasSize(expectedCreatedEvents);
@@ -121,7 +124,7 @@ public class TransactionEventListenerTest extends PluggableFlowableTestCase {
     public void testProcessExecutionWithRollback() {
 
         assertThat(TestTransactionEventListener.eventsReceived).isEmpty();
-        assertThat(runtimeService.createProcessInstanceQuery().count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().count()).isZero();
 
         // Regular execution, no exception
         runtimeService.startProcessInstanceByKey("testProcessExecutionWithRollback", CollectionUtil.singletonMap("throwException", false));

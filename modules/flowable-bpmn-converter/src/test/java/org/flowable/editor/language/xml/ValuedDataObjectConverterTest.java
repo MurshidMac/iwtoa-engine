@@ -13,6 +13,7 @@
 package org.flowable.editor.language.xml;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -29,34 +30,17 @@ import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.SubProcess;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.bpmn.model.ValuedDataObject;
-import org.junit.Test;
+import org.flowable.editor.language.xml.util.BpmnXmlConverterTest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * @see {https://activiti.atlassian.net/browse/ACT-1847}.
  */
-public class ValuedDataObjectConverterTest extends AbstractConverterTest {
+class ValuedDataObjectConverterTest {
 
-    @Test
-    public void convertXMLToModel() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        validateModel(bpmnModel);
-    }
-
-    @Test
-    public void convertModelToXML() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        BpmnModel parsedModel = exportAndReadXMLFile(bpmnModel);
-        validateModel(parsedModel);
-    }
-
-    @Override
-    protected String getResource() {
-        return "valueddataobjectmodel.bpmn";
-    }
-
-    private void validateModel(BpmnModel model) throws ParseException {
+    @BpmnXmlConverterTest("valueddataobjectmodel.bpmn")
+    void validateModel(BpmnModel model) throws ParseException {
         FlowElement flowElement = model.getMainProcess().getFlowElement("start1");
         assertThat(flowElement)
                 .isInstanceOfSatisfying(StartEvent.class, startEvent -> {
@@ -76,14 +60,12 @@ public class ValuedDataObjectConverterTest extends AbstractConverterTest {
         assertThat(dataObj.getId()).isEqualTo("dObj1");
         assertThat(dataObj.getName()).isEqualTo("StringTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:string");
-        assertThat(dataObj.getValue()).isInstanceOf(String.class);
         assertThat(dataObj.getValue()).isEqualTo("Testing1&2&3");
 
         dataObj = objectMap.get("dObj2");
         assertThat(dataObj.getId()).isEqualTo("dObj2");
         assertThat(dataObj.getName()).isEqualTo("BooleanTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:boolean");
-        assertThat(dataObj.getValue()).isInstanceOf(Boolean.class);
         assertThat(dataObj.getValue()).isEqualTo(Boolean.TRUE);
 
         dataObj = objectMap.get("dObj3");
@@ -98,28 +80,30 @@ public class ValuedDataObjectConverterTest extends AbstractConverterTest {
         assertThat(dataObj.getId()).isEqualTo("dObj4");
         assertThat(dataObj.getName()).isEqualTo("DoubleTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:double");
-        assertThat(dataObj.getValue()).isInstanceOf(Double.class);
-        assertThat(dataObj.getValue()).isEqualTo(123456789d);
+        assertThat(dataObj.getValue())
+                .isInstanceOf(Double.class)
+                .isEqualTo(123456789d);
 
         dataObj = objectMap.get("dObj5");
         assertThat(dataObj.getId()).isEqualTo("dObj5");
         assertThat(dataObj.getName()).isEqualTo("IntegerTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:int");
-        assertThat(dataObj.getValue()).isInstanceOf(Integer.class);
-        assertThat(dataObj.getValue()).isEqualTo(123);
+        assertThat(dataObj.getValue())
+                .isInstanceOf(Integer.class)
+                .isEqualTo(123);
 
         dataObj = objectMap.get("dObj6");
         assertThat(dataObj.getId()).isEqualTo("dObj6");
         assertThat(dataObj.getName()).isEqualTo("LongTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:long");
-        assertThat(dataObj.getValue()).isInstanceOf(Long.class);
-        assertThat(dataObj.getValue()).isEqualTo(-123456L);
+        assertThat(dataObj.getValue())
+                .isInstanceOf(Long.class)
+                .isEqualTo(-123456L);
         assertThat(dataObj.getExtensionElements()).hasSize(1);
         List<ExtensionElement> testValues = dataObj.getExtensionElements().get("testvalue");
-        assertThat(testValues).isNotNull();
-        assertThat(testValues).hasSize(1);
-        assertThat(testValues.get(0).getName()).isEqualTo("testvalue");
-        assertThat(testValues.get(0).getElementText()).isEqualTo("test");
+        assertThat(testValues)
+                .extracting(ExtensionElement::getName, ExtensionElement::getElementText)
+                .containsExactly(tuple("testvalue", "test"));
 
         dataObj = objectMap.get("dObjJson");
         assertThat(dataObj.getId()).isEqualTo("dObjJson");
@@ -156,7 +140,7 @@ public class ValuedDataObjectConverterTest extends AbstractConverterTest {
                 });
 
         objectMap = new HashMap<>();
-        for (ValuedDataObject valueObj : ((SubProcess)flowElement).getDataObjects()) {
+        for (ValuedDataObject valueObj : ((SubProcess) flowElement).getDataObjects()) {
             objectMap.put(valueObj.getId(), valueObj);
         }
 
@@ -164,14 +148,12 @@ public class ValuedDataObjectConverterTest extends AbstractConverterTest {
         assertThat(dataObj.getId()).isEqualTo("dObj7");
         assertThat(dataObj.getName()).isEqualTo("StringSubTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:string");
-        assertThat(dataObj.getValue()).isInstanceOf(String.class);
         assertThat(dataObj.getValue()).isEqualTo("Testing456");
 
         dataObj = objectMap.get("dObj8");
         assertThat(dataObj.getId()).isEqualTo("dObj8");
         assertThat(dataObj.getName()).isEqualTo("BooleanSubTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:boolean");
-        assertThat(dataObj.getValue()).isInstanceOf(Boolean.class);
         assertThat(dataObj.getValue()).isEqualTo(Boolean.FALSE);
 
         dataObj = objectMap.get("dObj9");
@@ -185,21 +167,24 @@ public class ValuedDataObjectConverterTest extends AbstractConverterTest {
         assertThat(dataObj.getId()).isEqualTo("dObj10");
         assertThat(dataObj.getName()).isEqualTo("DoubleSubTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:double");
-        assertThat(dataObj.getValue()).isInstanceOf(Double.class);
-        assertThat(dataObj.getValue()).isEqualTo(678912345d);
+        assertThat(dataObj.getValue())
+                .isInstanceOf(Double.class)
+                .isEqualTo(678912345d);
 
         dataObj = objectMap.get("dObj11");
         assertThat(dataObj.getId()).isEqualTo("dObj11");
         assertThat(dataObj.getName()).isEqualTo("IntegerSubTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:int");
-        assertThat(dataObj.getValue()).isInstanceOf(Integer.class);
-        assertThat(dataObj.getValue()).isEqualTo(45);
+        assertThat(dataObj.getValue())
+                .isInstanceOf(Integer.class)
+                .isEqualTo(45);
 
         dataObj = objectMap.get("dObj12");
         assertThat(dataObj.getId()).isEqualTo("dObj12");
         assertThat(dataObj.getName()).isEqualTo("LongSubTest");
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:long");
-        assertThat(dataObj.getValue()).isInstanceOf(Long.class);
-        assertThat(dataObj.getValue()).isEqualTo(456123L);
+        assertThat(dataObj.getValue())
+                .isInstanceOf(Long.class)
+                .isEqualTo(456123L);
     }
 }

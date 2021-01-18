@@ -12,13 +12,13 @@
  */
 package org.flowable.dmn.xml;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
 import org.flowable.dmn.model.Decision;
 import org.flowable.dmn.model.DmnDefinition;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ForceDMN11Test extends AbstractConverterTest {
 
@@ -43,7 +43,7 @@ public class ForceDMN11Test extends AbstractConverterTest {
 
     private void validateModel(DmnDefinition model) {
         List<Decision> decisions = model.getDecisions();
-        assertTrue(decisions.get(0).isForceDMN11());
+        assertThat(decisions.get(0).isForceDMN11()).isTrue();
     }
 
 }

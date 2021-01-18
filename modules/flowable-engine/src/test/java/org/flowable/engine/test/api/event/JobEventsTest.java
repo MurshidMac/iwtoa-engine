@@ -14,6 +14,7 @@ package org.flowable.engine.test.api.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -294,14 +295,14 @@ public class JobEventsTest extends PluggableFlowableTestCase {
 
         // the second timer job will be fired and no jobs should be remaining
         waitForJobExecutorToProcessAllJobs(2000, 200);
-        assertThat(managementService.createTimerJobQuery().processInstanceId(processInstance.getId()).count()).isEqualTo(0);
+        assertThat(managementService.createTimerJobQuery().processInstanceId(processInstance.getId()).count()).isZero();
 
         nowCalendar.add(Calendar.HOUR, 1);
         nowCalendar.add(Calendar.MINUTE, 5);
         testClock.setCurrentTime(nowCalendar.getTime());
         waitForJobExecutorToProcessAllJobs(2000, 200);
 
-        assertThat(managementService.createTimerJobQuery().processInstanceId(processInstance.getId()).count()).isEqualTo(0);
+        assertThat(managementService.createTimerJobQuery().processInstanceId(processInstance.getId()).count()).isZero();
 
         checkEventCount(1, FlowableEngineEventType.TIMER_FIRED);
         checkEventContext(filterEvents(FlowableEngineEventType.TIMER_FIRED).get(0), secondTimerInstance);
@@ -481,7 +482,7 @@ public class JobEventsTest extends PluggableFlowableTestCase {
         assertThat(theJob.getElementName()).isEqualTo("Timer");
 
         // Check delete-event has been dispatched
-        assertThat(listener.getEventsReceived()).hasSize(8);
+        assertThat(listener.getEventsReceived()).hasSize(9);
 
         // First, the timer was fired
         FlowableEngineEvent event = (FlowableEngineEvent) listener.getEventsReceived().get(0);
@@ -498,28 +499,32 @@ public class JobEventsTest extends PluggableFlowableTestCase {
         assertThat(event.getType()).isEqualTo(FlowableEngineEventType.JOB_EXECUTION_FAILURE);
         checkEventContext(event, theJob);
 
-        // Finally, an timer create event is received and the job count is decremented
         event = (FlowableEngineEvent) listener.getEventsReceived().get(3);
+        assertThat(event.getType()).isEqualTo(FlowableEngineEventType.JOB_MOVED_TO_DEADLETTER);
+        checkEventContext(event, theJob);
+
+        // Finally, an timer create event is received and the job count is decremented
+        event = (FlowableEngineEvent) listener.getEventsReceived().get(4);
         assertThat(event.getType()).isEqualTo(FlowableEngineEventType.ENTITY_CREATED);
         checkEventContext(event, theJob);
 
-        event = (FlowableEngineEvent) listener.getEventsReceived().get(4);
+        event = (FlowableEngineEvent) listener.getEventsReceived().get(5);
         assertThat(event.getType()).isEqualTo(FlowableEngineEventType.ENTITY_INITIALIZED);
         checkEventContext(event, theJob);
 
         // original job is deleted
-        event = (FlowableEngineEvent) listener.getEventsReceived().get(5);
+        event = (FlowableEngineEvent) listener.getEventsReceived().get(6);
         assertThat(event.getType()).isEqualTo(FlowableEngineEventType.ENTITY_DELETED);
         checkEventContext(event, theJob);
 
         // timer job updated
-        event = (FlowableEngineEvent) listener.getEventsReceived().get(6);
+        event = (FlowableEngineEvent) listener.getEventsReceived().get(7);
         assertThat(event.getType()).isEqualTo(FlowableEngineEventType.ENTITY_UPDATED);
         checkEventContext(event, theJob);
 
-        event = (FlowableEngineEvent) listener.getEventsReceived().get(7);
+        event = (FlowableEngineEvent) listener.getEventsReceived().get(8);
         assertThat(event.getType()).isEqualTo(FlowableEngineEventType.JOB_RETRIES_DECREMENTED);
-        assertThat(((Job) ((FlowableEntityEvent) event).getEntity()).getRetries()).isEqualTo(0);
+        assertThat(((Job) ((FlowableEntityEvent) event).getEntity()).getRetries()).isZero();
         checkEventContext(event, theJob);
     }
 
@@ -549,11 +554,10 @@ public class JobEventsTest extends PluggableFlowableTestCase {
 
         // Process Cancelled event should not be sent for the subprocess
         List<FlowableEvent> eventsReceived = activitiEventListener.getEventsReceived();
-        for (FlowableEvent eventReceived : eventsReceived) {
-            if (FlowableEngineEventType.PROCESS_CANCELLED == eventReceived.getType()) {
-                fail("Should not have received PROCESS_CANCELLED event");
-            }
-        }
+        assertThat(eventsReceived)
+                .extracting(FlowableEvent::getType)
+                .as("Should not have received PROCESS_CANCELLED event")
+                .doesNotContain(FlowableEngineEventType.PROCESS_CANCELLED);
 
         // validate the activityType string
         for (FlowableEvent eventReceived : eventsReceived) {

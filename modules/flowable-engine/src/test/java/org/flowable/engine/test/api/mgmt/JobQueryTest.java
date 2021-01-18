@@ -35,6 +35,7 @@ import org.flowable.engine.test.Deployment;
 import org.flowable.job.api.Job;
 import org.flowable.job.api.JobQuery;
 import org.flowable.job.api.TimerJobQuery;
+import org.flowable.job.service.JobService;
 import org.flowable.job.service.impl.cmd.CancelJobsCmd;
 import org.flowable.job.service.impl.persistence.entity.JobEntity;
 import org.junit.jupiter.api.AfterEach;
@@ -105,10 +106,11 @@ public class JobQueryTest extends PluggableFlowableTestCase {
 
             @Override
             public String execute(CommandContext commandContext) {
-                JobEntity message = CommandContextUtil.getJobService(commandContext).createJob();
+                JobService jobService = CommandContextUtil.getJobService(commandContext);
+                JobEntity message = jobService.createJob();
                 message.setJobType(Job.JOB_TYPE_MESSAGE);
                 message.setRetries(3);
-                CommandContextUtil.getJobService(commandContext).scheduleAsyncJob(message);
+                jobService.scheduleAsyncJob(message);
                 return message.getId();
             }
         });
@@ -117,7 +119,7 @@ public class JobQueryTest extends PluggableFlowableTestCase {
     @AfterEach
     protected void tearDown() throws Exception {
         repositoryService.deleteDeployment(deploymentId, true);
-        commandExecutor.execute(new CancelJobsCmd(messageId));
+        commandExecutor.execute(new CancelJobsCmd(messageId, processEngineConfiguration.getJobServiceConfiguration()));
     }
 
     @Test
@@ -199,7 +201,8 @@ public class JobQueryTest extends PluggableFlowableTestCase {
 
             @Override
             public Void execute(CommandContext commandContext) {
-                CommandContextUtil.getJobService(commandContext).updateJob(job);
+                JobService jobService = CommandContextUtil.getJobService(commandContext);
+                jobService.updateJob(job);
                 return null;
             }
 
@@ -226,7 +229,7 @@ public class JobQueryTest extends PluggableFlowableTestCase {
     public void testByInvalidCorrelationId() {
         assertThat(managementService.createJobQuery().correlationId("invalid").singleResult()).isNull();
         assertThat(managementService.createJobQuery().correlationId("invalid").list()).isEmpty();
-        assertThat(managementService.createJobQuery().correlationId("invalid").count()).isEqualTo(0);
+        assertThat(managementService.createJobQuery().correlationId("invalid").count()).isZero();
     }
 
     @Test
@@ -432,12 +435,14 @@ public class JobQueryTest extends PluggableFlowableTestCase {
         // asc
         assertThat(managementService.createJobQuery().orderByJobId().asc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByJobDuedate().asc().count()).isEqualTo(1);
+        assertThat(managementService.createJobQuery().orderByJobCreateTime().asc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByExecutionId().asc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByProcessInstanceId().asc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByJobRetries().asc().count()).isEqualTo(1);
 
         assertThat(managementService.createTimerJobQuery().orderByJobId().asc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByJobDuedate().asc().count()).isEqualTo(3);
+        assertThat(managementService.createTimerJobQuery().orderByJobCreateTime().asc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByExecutionId().asc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByProcessInstanceId().asc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByJobRetries().asc().count()).isEqualTo(3);
@@ -445,12 +450,14 @@ public class JobQueryTest extends PluggableFlowableTestCase {
         // desc
         assertThat(managementService.createJobQuery().orderByJobId().desc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByJobDuedate().desc().count()).isEqualTo(1);
+        assertThat(managementService.createJobQuery().orderByJobCreateTime().desc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByExecutionId().desc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByProcessInstanceId().desc().count()).isEqualTo(1);
         assertThat(managementService.createJobQuery().orderByJobRetries().desc().count()).isEqualTo(1);
 
         assertThat(managementService.createTimerJobQuery().orderByJobId().desc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByJobDuedate().desc().count()).isEqualTo(3);
+        assertThat(managementService.createTimerJobQuery().orderByJobCreateTime().desc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByExecutionId().desc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByProcessInstanceId().desc().count()).isEqualTo(3);
         assertThat(managementService.createTimerJobQuery().orderByJobRetries().desc().count()).isEqualTo(3);
@@ -518,8 +525,7 @@ public class JobQueryTest extends PluggableFlowableTestCase {
         Job failedJob = query.singleResult();
         assertThat(failedJob).isNotNull();
         assertThat(failedJob.getProcessInstanceId()).isEqualTo(processInstance.getId());
-        assertThat(failedJob.getExceptionMessage()).isNotNull();
-        assertTextPresent(EXCEPTION_MESSAGE, failedJob.getExceptionMessage());
+        assertThat(failedJob.getExceptionMessage()).containsSequence(EXCEPTION_MESSAGE);
     }
 
     private void verifyQueryResults(JobQuery query, int countExpected) {
@@ -564,7 +570,8 @@ public class JobQueryTest extends PluggableFlowableTestCase {
 
             @Override
             public Void execute(CommandContext commandContext) {
-                jobEntity = CommandContextUtil.getJobService(commandContext).createJob();
+                JobService jobService = CommandContextUtil.getJobService(commandContext);
+                jobEntity = jobService.createJob();
                 jobEntity.setJobType(Job.JOB_TYPE_MESSAGE);
                 jobEntity.setLockOwner(UUID.randomUUID().toString());
                 jobEntity.setRetries(0);
@@ -574,7 +581,7 @@ public class JobQueryTest extends PluggableFlowableTestCase {
                 exception.printStackTrace(new PrintWriter(stringWriter));
                 jobEntity.setExceptionStacktrace(stringWriter.toString());
 
-                CommandContextUtil.getJobService(commandContext).insertJob(jobEntity);
+                jobService.insertJob(jobEntity);
 
                 assertThat(jobEntity.getId()).isNotNull();
 
@@ -591,14 +598,15 @@ public class JobQueryTest extends PluggableFlowableTestCase {
 
             @Override
             public Void execute(CommandContext commandContext) {
-                jobEntity = CommandContextUtil.getJobService(commandContext).createJob();
+                JobService jobService = CommandContextUtil.getJobService(commandContext);
+                jobEntity = jobService.createJob();
                 jobEntity.setJobType(Job.JOB_TYPE_MESSAGE);
                 jobEntity.setLockOwner(UUID.randomUUID().toString());
                 jobEntity.setRetries(0);
 
                 jobEntity.setExceptionMessage("I'm supposed to fail");
 
-                CommandContextUtil.getJobService(commandContext).insertJob(jobEntity);
+                jobService.insertJob(jobEntity);
 
                 assertThat(jobEntity.getId()).isNotNull();
 
@@ -615,8 +623,8 @@ public class JobQueryTest extends PluggableFlowableTestCase {
 
             @Override
             public Void execute(CommandContext commandContext) {
-
-                CommandContextUtil.getJobService(commandContext).deleteJob(jobEntity.getId());
+                JobService jobService = CommandContextUtil.getJobService(commandContext);
+                jobService.deleteJob(jobEntity.getId());
                 return null;
             }
         });

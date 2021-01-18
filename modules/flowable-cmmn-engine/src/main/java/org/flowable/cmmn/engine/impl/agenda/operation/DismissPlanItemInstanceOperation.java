@@ -36,17 +36,17 @@ public class DismissPlanItemInstanceOperation extends AbstractChangePlanItemInst
     }
 
     @Override
-    protected String getNewState() {
+    public String getNewState() {
         return PlanItemInstanceState.UNAVAILABLE;
     }
 
     @Override
-    protected String getLifeCycleTransition() {
+    public String getLifeCycleTransition() {
         return PlanItemTransition.DISMISS;
     }
 
     @Override
-    protected String getOperationName() {
+    public String getOperationName() {
         return "[Dismiss plan item]";
     }
 

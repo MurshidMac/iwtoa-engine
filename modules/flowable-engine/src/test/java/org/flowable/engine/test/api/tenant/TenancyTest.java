@@ -147,7 +147,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
                 .latestVersion()
                 .singleResult().getId()).isEqualTo(processDefinitionIdWithTenant2);
         assertThat(repositoryService.createProcessDefinitionQuery().processDefinitionKey("oneTaskProcess").processDefinitionTenantId("Not a tenant")
-                .latestVersion().count()).isEqualTo(0);
+                .latestVersion().count()).isZero();
         assertThat(repositoryService.createProcessDefinitionQuery().processDefinitionKey("oneTaskProcess").processDefinitionWithoutTenantId().latestVersion()
                 .singleResult().getId()).isEqualTo(processDefinitionIdWithoutTenant);
 
@@ -361,7 +361,6 @@ public class TenancyTest extends PluggableFlowableTestCase {
         assertThat(repositoryService.createProcessDefinitionQuery().list()).hasSize(2);
         assertThat(repositoryService.createProcessDefinitionQuery().processDefinitionTenantId(TEST_TENANT_ID).list()).isEmpty();
         assertThat(repositoryService.createProcessDefinitionQuery().processDefinitionTenantId(newTenantId).list()).hasSize(1);
-        assertThat(repositoryService.createProcessDefinitionQuery().processDefinitionTenantId(newTenantId).list()).hasSize(1);
 
         // Verify process instances
         assertThat(runtimeService.createProcessInstanceQuery().list()).hasSize(nrOfProcessInstancesNoTenant + nrOfProcessInstancesWithTenant);
@@ -494,7 +493,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
 
         assertThat(this.repositoryService.createProcessDefinitionQuery()
                 .processDefinitionTenantId("tenantA")
-                .count()).isEqualTo(0);
+                .count()).isZero();
 
         // Deploying another version should just up the version
         String processDefinitionIdNoTenant2 = deployOneTaskTestProcess();
@@ -673,15 +672,11 @@ public class TenancyTest extends PluggableFlowableTestCase {
         repositoryService.suspendProcessDefinitionByKey("oneTaskProcess", tenantB);
 
         // Shouldn't be able to start proc defs for tenant B
-        try {
-            runtimeService.startProcessInstanceById(procDefIdB);
-        } catch (FlowableException e) {
-        }
+        assertThatThrownBy(() -> runtimeService.startProcessInstanceById(procDefIdB))
+                .isInstanceOf(FlowableException.class);
 
-        try {
-            runtimeService.startProcessInstanceById(procDefIdB2);
-        } catch (FlowableException e) {
-        }
+        assertThatThrownBy(() -> runtimeService.startProcessInstanceById(procDefIdB2))
+                .isInstanceOf(FlowableException.class);
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceById(procDefIdA);
         assertThat(processInstance).isNotNull();
@@ -700,10 +695,8 @@ public class TenancyTest extends PluggableFlowableTestCase {
 
         // Suspending with NO tenant id should give an error, cause they both
         // have tenants
-        try {
-            repositoryService.suspendProcessDefinitionByKey("oneTaskProcess");
-        } catch (FlowableException e) {
-        }
+        assertThatThrownBy(() -> repositoryService.suspendProcessDefinitionByKey("oneTaskProcess"))
+                .isInstanceOf(FlowableException.class);
     }
 
     @Test
@@ -730,7 +723,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
         // Now, start 1 process instance that fires a signal event (not in
         // tenant context), it should only continue those without tenant
         runtimeService.startProcessInstanceByKey("testMtSignalFiring");
-        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isZero();
         assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isEqualTo(2);
 
         // Start a process instance that is running in tenant context
@@ -773,7 +766,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
         // Signal through API (with tenant)
         runtimeService.signalEventReceivedWithTenantId("The Signal", TEST_TENANT_ID);
         assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(4);
-        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isZero();
 
         // Signal through API (without tenant)
         runtimeService.signalEventReceived("The Signal");
@@ -815,7 +808,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
 
         // Signal through API (without tenant)
         runtimeService.signalEventReceived("The Signal");
-        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isZero();
         assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isEqualTo(5);
 
         // Signal through API (with tenant)
@@ -856,21 +849,21 @@ public class TenancyTest extends PluggableFlowableTestCase {
 
         // Signal through API (with tenant)
         runtimeService.signalEventReceivedAsyncWithTenantId("The Signal", TEST_TENANT_ID);
-        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(0);
-        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isZero();
+        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isZero();
 
         for (Job job : managementService.createJobQuery().list()) {
             managementService.executeJob(job.getId());
         }
 
         assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(4);
-        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isZero();
 
         // Signal through API (without tenant)
         runtimeService.signalEventReceivedAsync("The Signal");
 
         assertThat(taskService.createTaskQuery().taskName("Task after signal").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(4);
-        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("Task after signal").taskWithoutTenantId().count()).isZero();
 
         for (Job job : managementService.createJobQuery().list()) {
             managementService.executeJob(job.getId());
@@ -899,7 +892,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
         runtimeService.signalEventReceived("The Signal");
         assertThat(runtimeService.createProcessInstanceQuery().count()).isEqualTo(3);
         assertThat(runtimeService.createProcessInstanceQuery().processInstanceWithoutTenantId().count()).isEqualTo(3);
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceTenantId(TEST_TENANT_ID).count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().processInstanceTenantId(TEST_TENANT_ID).count()).isZero();
 
         // Signalling with tenant
         runtimeService.signalEventReceivedWithTenantId("The Signal", TEST_TENANT_ID);
@@ -950,7 +943,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
 
         assertThat(taskService.createTaskQuery().taskName("My task").count()).isEqualTo(2);
         assertThat(taskService.createTaskQuery().taskName("My task").taskWithoutTenantId().count()).isEqualTo(2);
-        assertThat(taskService.createTaskQuery().taskName("My task").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("My task").taskTenantId(TEST_TENANT_ID).count()).isZero();
 
         // Start a process instance by message with tenant
         runtimeService.startProcessInstanceByMessageAndTenantId("My message", TEST_TENANT_ID);
@@ -982,7 +975,7 @@ public class TenancyTest extends PluggableFlowableTestCase {
         runtimeService.startProcessInstanceByMessageAndTenantId("My message", TEST_TENANT_ID);
         runtimeService.startProcessInstanceByMessageAndTenantId("My message", TEST_TENANT_ID);
         assertThat(taskService.createTaskQuery().taskName("My task").count()).isEqualTo(3);
-        assertThat(taskService.createTaskQuery().taskName("My task").taskWithoutTenantId().count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().taskName("My task").taskWithoutTenantId().count()).isZero();
         assertThat(taskService.createTaskQuery().taskName("My task").taskTenantId(TEST_TENANT_ID).count()).isEqualTo(3);
 
         // Start a process instance by message without tenant

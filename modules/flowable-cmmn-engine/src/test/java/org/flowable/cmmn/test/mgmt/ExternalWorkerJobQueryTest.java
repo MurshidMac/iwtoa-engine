@@ -22,7 +22,6 @@ import java.util.List;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.engine.impl.job.ExternalWorkerTaskCompleteJobHandler;
-import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.engine.test.FlowableCmmnTestCase;
 import org.flowable.common.engine.api.scope.ScopeTypes;
@@ -79,7 +78,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
                 .containsOnly(caseInstance2.getId());
 
         query = cmmnManagementService.createExternalWorkerJobQuery().caseInstanceId("invalid");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
         assertThat(query.singleResult()).isNull();
     }
@@ -100,7 +99,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
                 .containsOnly(caseInstance1.getId(), caseInstance2.getId());
 
         query = cmmnManagementService.createExternalWorkerJobQuery().caseDefinitionId("invalid");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
         assertThat(query.singleResult()).isNull();
     }
@@ -132,7 +131,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
         assertThat(query.singleResult()).isNotNull();
 
         query = cmmnManagementService.createExternalWorkerJobQuery().planItemInstanceId("invalid");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
         assertThat(query.singleResult()).isNull();
     }
@@ -154,7 +153,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
                 .containsExactlyInAnyOrder(caseInstance1.getId(), caseInstance2.getId());
 
         query = cmmnManagementService.createExternalWorkerJobQuery().elementId("invalid");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
 
     }
@@ -176,7 +175,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
                 .containsExactlyInAnyOrder(caseInstance1.getId(), caseInstance2.getId());
 
         query = cmmnManagementService.createExternalWorkerJobQuery().elementName("invalid");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
     }
 
@@ -192,7 +191,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
         assertThat(query.list()).hasSize(2);
 
         query = cmmnManagementService.createExternalWorkerJobQuery().handlerType("invalid");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
     }
 
@@ -252,7 +251,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
         assertThat(job.getExceptionMessage()).isEqualTo("Error message");
 
         query = cmmnManagementService.createExternalWorkerJobQuery().exceptionMessage("Error");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
         assertThat(query.singleResult()).isNull();
     }
@@ -333,7 +332,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
         assertThat(job.getLockExpirationTime()).isNotNull();
 
         query = cmmnManagementService.createExternalWorkerJobQuery().lockOwner("invalid");
-        assertThat(query.count()).isEqualTo(0);
+        assertThat(query.count()).isZero();
         assertThat(query.list()).isEmpty();
         assertThat(query.singleResult()).isNull();
     }
@@ -403,7 +402,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
     protected void addUserIdentityLinkToJob(Job job, String userId) {
         cmmnEngineConfiguration.getCommandExecutor()
                 .execute(commandContext -> {
-                    CommandContextUtil.getIdentityLinkService(commandContext)
+                    cmmnEngineConfiguration.getIdentityLinkServiceConfiguration().getIdentityLinkService()
                             .createScopeIdentityLink(null, job.getCorrelationId(), ScopeTypes.EXTERNAL_WORKER, userId, null, IdentityLinkType.PARTICIPANT);
 
                     return null;
@@ -413,7 +412,7 @@ public class ExternalWorkerJobQueryTest extends FlowableCmmnTestCase {
     protected void addGroupIdentityLinkToJob(Job job, String groupId) {
         cmmnEngineConfiguration.getCommandExecutor()
                 .execute(commandContext -> {
-                    CommandContextUtil.getIdentityLinkService(commandContext)
+                    cmmnEngineConfiguration.getIdentityLinkServiceConfiguration().getIdentityLinkService()
                             .createScopeIdentityLink(null, job.getCorrelationId(), ScopeTypes.EXTERNAL_WORKER, null, groupId, IdentityLinkType.PARTICIPANT);
                     return null;
                 });

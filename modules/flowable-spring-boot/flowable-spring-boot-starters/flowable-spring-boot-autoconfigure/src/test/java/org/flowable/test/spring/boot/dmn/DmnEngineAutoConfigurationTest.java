@@ -32,7 +32,7 @@ import org.flowable.app.engine.AppEngine;
 import org.flowable.app.engine.AppEngineConfiguration;
 import org.flowable.app.spring.SpringAppEngineConfiguration;
 import org.flowable.common.spring.AutoDeploymentStrategy;
-import org.flowable.dmn.api.DmnDecisionTable;
+import org.flowable.dmn.api.DmnDecision;
 import org.flowable.dmn.api.DmnDeployment;
 import org.flowable.dmn.api.DmnEngineConfigurationApi;
 import org.flowable.dmn.api.DmnRepositoryService;
@@ -52,7 +52,7 @@ import org.flowable.spring.boot.app.AppEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.dmn.DmnEngineAutoConfiguration;
 import org.flowable.spring.boot.dmn.DmnEngineServicesAutoConfiguration;
 import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
@@ -324,7 +324,7 @@ public class DmnEngineAutoConfigurationTest {
 
     private void assertAllServicesPresent(ApplicationContext context, DmnEngine dmnEngine) {
         List<Method> methods = Stream.of(DmnEngine.class.getDeclaredMethods())
-                        .filter(method -> !(method.getName().equals("close") || method.getName().equals("getName"))).collect(Collectors.toList());
+                        .filter(method -> !("close".equals(method.getName()) || "getName".equals(method.getName()))).collect(Collectors.toList());
 
         assertThat(methods).allSatisfy(method -> {
             try {
@@ -336,35 +336,37 @@ public class DmnEngineAutoConfigurationTest {
     }
 
     protected void assertAutoDeployment(DmnRepositoryService repositoryService) {
-        List<DmnDecisionTable> decisions = repositoryService.createDecisionTableQuery().list();
-        assertThat(decisions)
-            .extracting(DmnDecisionTable::getKey, DmnDecisionTable::getName)
-            .containsExactlyInAnyOrder(
-                tuple("RiskRating", "Risk Rating Decision Table"),
-                tuple("simple", "Full Decision"),
-                tuple("strings1", "Simple decision"),
-                tuple("strings2", "Simple decision")
-            );
-    }
-
-    protected void assertAutoDeploymentWithAppEngine(AssertableApplicationContext context) {
-        DmnRepositoryService repositoryService = context.getBean(DmnRepositoryService.class);
-        List<DmnDecisionTable> decisions = repositoryService.createDecisionTableQuery().list();
-        assertThat(decisions)
-            .extracting(DmnDecisionTable::getKey, DmnDecisionTable::getName)
+        List<DmnDecision> definitions = repositoryService.createDecisionQuery().list();
+        assertThat(definitions)
+            .extracting(DmnDecision::getKey, DmnDecision::getName)
             .containsExactlyInAnyOrder(
                 tuple("RiskRating", "Risk Rating Decision Table"),
                 tuple("simple", "Full Decision"),
                 tuple("strings1", "Simple decision"),
                 tuple("strings2", "Simple decision"),
-                tuple("managerApprovalNeeded", "Manager approval needed2")
+                tuple("decisionService13", "Decision Service 1_3")
+            );
+    }
+
+    protected void assertAutoDeploymentWithAppEngine(AssertableApplicationContext context) {
+        DmnRepositoryService repositoryService = context.getBean(DmnRepositoryService.class);
+        List<DmnDecision> definitions = repositoryService.createDecisionQuery().list();
+        assertThat(definitions)
+            .extracting(DmnDecision::getKey, DmnDecision::getName)
+            .containsExactlyInAnyOrder(
+                tuple("RiskRating", "Risk Rating Decision Table"),
+                tuple("simple", "Full Decision"),
+                tuple("strings1", "Simple decision"),
+                tuple("strings2", "Simple decision"),
+                tuple("managerApprovalNeeded", "Manager approval needed2"),
+                tuple("decisionService13", "Decision Service 1_3")
             );
         
-        DmnDecisionTable dmnDecisionTable = repositoryService.createDecisionTableQuery().latestVersion().decisionTableKey("strings1").singleResult();
-        assertThat(dmnDecisionTable.getVersion()).isOne();
+        DmnDecision definition = repositoryService.createDecisionQuery().latestVersion().decisionKey("strings1").singleResult();
+        assertThat(definition.getVersion()).isOne();
         
-        dmnDecisionTable = repositoryService.createDecisionTableQuery().latestVersion().decisionTableKey("managerApprovalNeeded").singleResult();
-        assertThat(dmnDecisionTable.getVersion()).isOne();
+        definition = repositoryService.createDecisionQuery().latestVersion().decisionKey("managerApprovalNeeded").singleResult();
+        assertThat(definition.getVersion()).isOne();
         
         List<DmnDeployment> deployments = repositoryService.createDeploymentQuery().list();
 

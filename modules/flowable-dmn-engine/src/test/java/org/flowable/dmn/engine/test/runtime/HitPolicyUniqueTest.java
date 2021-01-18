@@ -13,11 +13,12 @@
 package org.flowable.dmn.engine.test.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.util.Map;
 
 import org.flowable.dmn.api.DecisionExecutionAuditContainer;
-import org.flowable.dmn.api.DmnRuleService;
+import org.flowable.dmn.api.DmnDecisionService;
 import org.flowable.dmn.engine.DmnEngine;
 import org.flowable.dmn.engine.test.DmnDeployment;
 import org.flowable.dmn.engine.test.FlowableDmnRule;
@@ -36,21 +37,22 @@ public class HitPolicyUniqueTest {
     @DmnDeployment
     public void uniqueHitPolicy() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         Map<String, Object> result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
                 .variable("inputVariable1", 10)
                 .executeWithSingleResult();
 
-        assertThat(result.get("outputVariable1")).isEqualTo("eq 10");
+        assertThat(result)
+                .containsEntry("outputVariable1", "eq 10");
     }
 
     @Test
     @DmnDeployment
     public void uniqueHitPolicyViolated() {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         DecisionExecutionAuditContainer result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
@@ -75,7 +77,7 @@ public class HitPolicyUniqueTest {
         DmnEngine dmnEngine = flowableDmnRule.getDmnEngine();
         dmnEngine.getDmnEngineConfiguration().setStrictMode(false);
 
-        DmnRuleService dmnRuleService = dmnEngine.getDmnRuleService();
+        DmnDecisionService dmnRuleService = dmnEngine.getDmnDecisionService();
 
         DecisionExecutionAuditContainer result = dmnRuleService.createExecuteDecisionBuilder()
                 .decisionKey("decision1")
@@ -86,8 +88,12 @@ public class HitPolicyUniqueTest {
 
         Map<String, Object> outputMap = result.getDecisionResult().iterator().next();
 
-        assertThat(outputMap.get("outputVariable1")).isEqualTo("lt 20");
-        assertThat(outputMap.get("outputVariable2")).isEqualTo(10D);
+        assertThat(outputMap)
+                .containsOnly(
+                        entry("outputVariable1", "lt 20"),
+                        entry("outputVariable2", 10D)
+                );
+
         assertThat(result.isFailed()).isFalse();
 
         assertThat(result.getExceptionMessage()).isNull();

@@ -386,6 +386,21 @@ public class VariablesTest extends PluggableFlowableTestCase {
         variableNames.add("stringVar");
 
         // getDataObjects via names
+
+        // no locale/default
+        dataObjects = runtimeService.getDataObjects(processInstance.getId(), variableNames);
+        assertThat(dataObjects).hasSize(1);
+        dataObject = dataObjects.get("stringVar");
+        assertThat(dataObject.getName()).isEqualTo("stringVar");
+        assertThat(dataObject.getValue()).isEqualTo("coca-cola");
+        assertThat(dataObject.getLocalizedName()).isEqualTo("stringVar");
+        assertThat(dataObject.getDescription()).isEqualTo("stringVar 'default' description");
+        assertThat(dataObject.getDataObjectDefinitionKey()).isEqualTo("stringVarId");
+        assertThat(dataObject.getType()).isEqualTo("string");
+        assertThat(dataObject.getProcessInstanceId()).isEqualTo(processInstance.getId());
+        assertThat(dataObject.getExecutionId()).isEqualTo(processInstance.getId());
+        assertThat(dataObject.getId()).isNotNull();
+
         dataObjects = runtimeService.getDataObjects(processInstance.getId(), variableNames, "es", false);
         assertThat(dataObjects).hasSize(1);
         dataObject = dataObjects.get("stringVar");
@@ -557,6 +572,21 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertThat(dataObject.getId()).isNotNull();
 
         // getDataObjectsLocal via names
+
+        // no locale/default
+        dataObjects = runtimeService.getDataObjectsLocal(processInstance.getId(), variableNames);
+        assertThat(dataObjects).hasSize(1);
+        dataObject = dataObjects.get("stringVar");
+        assertThat(dataObject.getName()).isEqualTo("stringVar");
+        assertThat(dataObject.getValue()).isEqualTo("coca-cola");
+        assertThat(dataObject.getLocalizedName()).isEqualTo("stringVar");
+        assertThat(dataObject.getDescription()).isEqualTo("stringVar 'default' description");
+        assertThat(dataObject.getDataObjectDefinitionKey()).isEqualTo("stringVarId");
+        assertThat(dataObject.getType()).isEqualTo("string");
+        assertThat(dataObject.getProcessInstanceId()).isEqualTo(processInstance.getId());
+        assertThat(dataObject.getExecutionId()).isEqualTo(processInstance.getId());
+        assertThat(dataObject.getId()).isNotNull();
+
         dataObjects = runtimeService.getDataObjectsLocal(processInstance.getId(), variableNames, "es", false);
         assertThat(dataObjects).hasSize(1);
         dataObject = dataObjects.get("stringVar");
@@ -956,7 +986,6 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertThat(dataObject.getLocalizedName()).isEqualTo("stringVar");
         assertThat(dataObject.getName()).isEqualTo("stringVar");
         assertThat(dataObject.getProcessInstanceId()).isEqualTo(processInstance.getId());
-        assertThat(dataObject.getType()).isEqualTo("string");
         assertThat(dataObject.getType()).isEqualTo("string");
         assertThat(dataObject.getValue()).isEqualTo("coca-cola");
 
@@ -1473,7 +1502,6 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertThat(dataObject.getDescription()).isEqualTo("intVar 'default' description");
         assertThat(dataObject.getExecutionId()).isEqualTo(subprocess.getId());
         assertThat(dataObject.getId()).isNotNull();
-        assertThat(dataObject.getId()).isNotNull();
         assertThat(dataObject.getLocalizedName()).isEqualTo("intVar");
         assertThat(dataObject.getProcessInstanceId()).isEqualTo(processInstance.getId());
         assertThat(dataObject.getType()).isEqualTo("int");
@@ -1558,7 +1586,6 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertThat(dataObject.getDescription()).isEqualTo("intVar 'en-AU' Description");
         assertThat(dataObject.getExecutionId()).isEqualTo(subprocess.getId());
         assertThat(dataObject.getId()).isNotNull();
-        assertThat(dataObject.getId()).isNotNull();
         assertThat(dataObject.getLocalizedName()).isEqualTo("intVar 'en-AU' Name");
         assertThat(dataObject.getName()).isEqualTo("intVar");
         assertThat(dataObject.getProcessInstanceId()).isEqualTo(processInstance.getId());
@@ -1620,6 +1647,21 @@ public class VariablesTest extends PluggableFlowableTestCase {
         variableNames.add("stringVar");
 
         // getDataObjects via names
+
+        // no locale/default
+        dataObjects = taskService.getDataObjects(task.getId(), variableNames);
+        assertThat(dataObjects).hasSize(1);
+        dataObject = dataObjects.get("stringVar");
+        assertThat(dataObject.getName()).isEqualTo("stringVar");
+        assertThat(dataObject.getValue()).isEqualTo("coca-cola");
+        assertThat(dataObject.getLocalizedName()).isEqualTo("stringVar");
+        assertThat(dataObject.getDescription()).isEqualTo("stringVar 'default' description");
+        assertThat(dataObject.getDataObjectDefinitionKey()).isEqualTo("stringVarId");
+        assertThat(dataObject.getType()).isEqualTo("string");
+        assertThat(dataObject.getProcessInstanceId()).isEqualTo(processInstance.getId());
+        assertThat(dataObject.getExecutionId()).isEqualTo(processInstance.getId());
+        assertThat(dataObject.getId()).isNotNull();
+
         dataObjects = taskService.getDataObjects(task.getId(), variableNames, "es", false);
         assertThat(dataObjects).hasSize(1);
         dataObject = dataObjects.get("stringVar");
@@ -1692,7 +1734,6 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertThat(dataObject.getValue()).isEqualTo("coca-cola");
         assertThat(dataObject.getLocalizedName()).isEqualTo("stringVar");
         assertThat(dataObject.getDescription()).isEqualTo("stringVar 'default' description");
-        assertThat(dataObject.getDataObjectDefinitionKey()).isEqualTo("stringVarId");
         assertThat(dataObject.getDataObjectDefinitionKey()).isEqualTo("stringVarId");
         assertThat(dataObject.getType()).isEqualTo("string");
         assertThat(dataObject.getProcessInstanceId()).isEqualTo(processInstance.getId());
@@ -1870,7 +1911,8 @@ public class VariablesTest extends PluggableFlowableTestCase {
             newVariables.put("serializableVar", (short) 222);
             runtimeService.setVariables(processInstance.getId(), newVariables);
             variables = runtimeService.getVariables(processInstance.getId());
-            assertThat(variables.get("serializableVar")).isEqualTo((short) 222);
+            assertThat(variables)
+                    .containsEntry("serializableVar", (short) 222);
 
             String newSerializableVarId = getVariableInstanceId(processInstance.getId(), "serializableVar");
 
@@ -1881,7 +1923,8 @@ public class VariablesTest extends PluggableFlowableTestCase {
             newVariables.put("longVar", (short) 123);
             runtimeService.setVariables(processInstance.getId(), newVariables);
             variables = runtimeService.getVariables(processInstance.getId());
-            assertThat(variables.get("longVar")).isEqualTo((short) 123);
+            assertThat(variables)
+                    .containsEntry("longVar", (short) 123);
 
             String newLongVar = getVariableInstanceId(processInstance.getId(), "longVar");
             assertThat(newLongVar).isEqualTo(oldLongVar);
@@ -1912,7 +1955,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         task = taskService.createTaskQuery().processInstanceId(processId).singleResult();
         String taskId = task.getId();
         try {
-            assertThatThrownBy(() -> formService.submitTaskFormData(taskId, new HashMap<String, String>()))
+            assertThatThrownBy(() -> formService.submitTaskFormData(taskId, new HashMap<>()))
                     .isExactlyInstanceOf(FlowableException.class);
         } finally {
             runtimeService.deleteProcessInstance(processId, "intentional exception in script task");

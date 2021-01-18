@@ -16,6 +16,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Instant;
 
+import org.flowable.common.engine.impl.AbstractEngineConfiguration;
 import org.flowable.common.engine.impl.interceptor.Command;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.persistence.entity.PropertyEntity;
@@ -49,15 +50,17 @@ public class LockCmd implements Command<Boolean> {
     }
 
     protected String lockName;
+    protected String engineType;
 
-    public LockCmd(String lockName) {
+    public LockCmd(String lockName, String engineType) {
         this.lockName = lockName;
+        this.engineType = engineType;
     }
 
     @Override
     public Boolean execute(CommandContext commandContext) {
-
-        PropertyEntityManager propertyEntityManager = commandContext.getCurrentEngineConfiguration().getPropertyEntityManager();
+        AbstractEngineConfiguration engineConfiguration = commandContext.getEngineConfigurations().get(engineType);
+        PropertyEntityManager propertyEntityManager = engineConfiguration.getPropertyEntityManager();
         PropertyEntity property = propertyEntityManager.findById(lockName);
         if (property == null) {
             property = propertyEntityManager.create();
@@ -65,6 +68,9 @@ public class LockCmd implements Command<Boolean> {
             // The format of the value is the current time in ISO8601 - hostName(hostAddress)
             property.setValue(Instant.now().toString() + hostLockDescription);
             propertyEntityManager.insert(property);
+            return true;
+        } else if (property.getValue() == null) {
+            property.setValue(Instant.now().toString() + hostLockDescription);
             return true;
         } else {
             return false;

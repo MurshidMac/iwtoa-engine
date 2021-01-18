@@ -76,7 +76,7 @@ public class CaseDefinitionCollectionResourceTest extends BaseSpringRestTestCase
 
                 String key = caseDefinitionJson.get("key").asText();
                 JsonNode graphicalNotationNode = caseDefinitionJson.get("graphicalNotationDefined");
-                if (key.equals("testRepeatingStage")) {
+                if ("testRepeatingStage".equals(key)) {
                     assertThat(graphicalNotationNode.asBoolean()).isTrue();
                 } else {
                     assertThat(graphicalNotationNode.asBoolean()).isFalse();
@@ -130,7 +130,7 @@ public class CaseDefinitionCollectionResourceTest extends BaseSpringRestTestCase
             url = baseUrl + "?latest=true";
             assertResultsPresentInDataResponse(url, oneTaskCase.getId(), simpleCaseDef.getId(), repeatingStageCase.getId());
             url = baseUrl + "?latest=false";
-            assertResultsPresentInDataResponse(baseUrl, firstOneTaskCase.getId(), oneTaskCase.getId(), simpleCaseDef.getId(), repeatingStageCase.getId());
+            assertResultsPresentInDataResponse(url, firstOneTaskCase.getId(), oneTaskCase.getId(), simpleCaseDef.getId(), repeatingStageCase.getId());
 
             // Test startableByUser
             url = baseUrl + "?startableByUser=kermit";

@@ -24,6 +24,8 @@ import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.engine.test.FlowableCmmnTestCase;
+import org.flowable.cmmn.engine.test.impl.CmmnHistoryTestHelper;
+import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.task.api.Task;
 import org.junit.After;
 import org.junit.Test;
@@ -55,17 +57,15 @@ public class CacheTaskTest extends FlowableCmmnTestCase {
                 .caseDefinitionKey("myCase")
                 .start();
 
-        HistoricPlanItemInstance planItemInstance = cmmnHistoryService.createHistoricPlanItemInstanceQuery()
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+            HistoricPlanItemInstance planItemInstance = cmmnHistoryService.createHistoricPlanItemInstanceQuery()
                 .planItemInstanceCaseInstanceId(caseInstance.getId()).singleResult();
 
-        assertThat(ServiceCacheTask.caseInstanceId).isNotNull();
-        assertThat(ServiceCacheTask.caseInstanceId).isEqualTo(caseInstance.getId());
-        assertThat(ServiceCacheTask.historicCaseInstanceId).isNotNull();
-        assertThat(ServiceCacheTask.historicCaseInstanceId).isEqualTo(caseInstance.getId());
-        assertThat(ServiceCacheTask.planItemInstanceId).isNotNull();
-        assertThat(ServiceCacheTask.planItemInstanceId).isEqualTo(planItemInstance.getId());
-        assertThat(ServiceCacheTask.historicPlanItemInstanceId).isNotNull();
-        assertThat(ServiceCacheTask.historicPlanItemInstanceId).isEqualTo(planItemInstance.getId());
+            assertThat(ServiceCacheTask.caseInstanceId).isEqualTo(caseInstance.getId());
+            assertThat(ServiceCacheTask.historicCaseInstanceId).isEqualTo(caseInstance.getId());
+            assertThat(ServiceCacheTask.planItemInstanceId).isEqualTo(planItemInstance.getId());
+            assertThat(ServiceCacheTask.historicPlanItemInstanceId).isEqualTo(planItemInstance.getId());
+        }
     }
 
     @Test
@@ -80,9 +80,7 @@ public class CacheTaskTest extends FlowableCmmnTestCase {
         Task task = cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).singleResult();
         assertThat(task).isNotNull();
 
-        assertThat(CacheTaskListener.taskId).isNotNull();
         assertThat(CacheTaskListener.taskId).isEqualTo(task.getId());
-        assertThat(CacheTaskListener.historicTaskId).isNotNull();
         assertThat(CacheTaskListener.historicTaskId).isEqualTo(task.getId());
     }
 
@@ -95,14 +93,15 @@ public class CacheTaskTest extends FlowableCmmnTestCase {
         CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
                 .caseDefinitionKey("myCase")
                 .start();
-        HistoricMilestoneInstance milestoneInstance = cmmnHistoryService.createHistoricMilestoneInstanceQuery()
-                .milestoneInstanceCaseInstanceId(caseInstance.getId()).singleResult();
-        assertThat(milestoneInstance).isNotNull();
 
-        assertThat(CacheMilestoneListener.milestoneInstanceId).isNotNull();
-        assertThat(CacheMilestoneListener.milestoneInstanceId).isEqualTo(milestoneInstance.getId());
-        assertThat(CacheMilestoneListener.historicMilestoneInstanceId).isNotNull();
-        assertThat(CacheMilestoneListener.historicMilestoneInstanceId).isEqualTo(milestoneInstance.getId());
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+            HistoricMilestoneInstance milestoneInstance = cmmnHistoryService.createHistoricMilestoneInstanceQuery()
+                .milestoneInstanceCaseInstanceId(caseInstance.getId()).singleResult();
+            assertThat(milestoneInstance).isNotNull();
+
+            assertThat(CacheMilestoneListener.milestoneInstanceId).isEqualTo(milestoneInstance.getId());
+            assertThat(CacheMilestoneListener.historicMilestoneInstanceId).isEqualTo(milestoneInstance.getId());
+        }
     }
 
     @Test
@@ -126,7 +125,10 @@ public class CacheTaskTest extends FlowableCmmnTestCase {
 
         assertThat(caseInstance.getCaseVariables()).containsOnly(entries);
         assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.VARIABLES).containsOnly(entries);
-        assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.HISTORIC_VARIABLES).containsOnly(entries);
+
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+            assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.HISTORIC_VARIABLES).containsOnly(entries);
+        }
     }
 
     @Test
@@ -149,7 +151,10 @@ public class CacheTaskTest extends FlowableCmmnTestCase {
         );
 
         assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.VARIABLES).isNull();
-        assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.HISTORIC_VARIABLES).isNull();
+
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+            assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.HISTORIC_VARIABLES).isNull();
+        }
 
         Task task = cmmnTaskService.createTaskQuery().singleResult();
         assertThat(task).isNotNull();
@@ -180,25 +185,31 @@ public class CacheTaskTest extends FlowableCmmnTestCase {
             assertThat(queriedCaseInstance.getCaseVariables()).containsOnly(entries);
 
             // Make sure that it is loaded in the cache
-            HistoricCaseInstance historicQueriedCaseInstance = CommandContextUtil.getHistoricCaseInstanceEntityManager(commandContext)
+            if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+                HistoricCaseInstance historicQueriedCaseInstance = CommandContextUtil.getHistoricCaseInstanceEntityManager(commandContext)
                     .findById(caseInstance.getId());
-            assertThat(historicQueriedCaseInstance.getCaseVariables()).isEmpty();
+                assertThat(historicQueriedCaseInstance.getCaseVariables()).isEmpty();
 
-            historicQueriedCaseInstance = cmmnHistoryService.createHistoricCaseInstanceQuery()
+                historicQueriedCaseInstance = cmmnHistoryService.createHistoricCaseInstanceQuery()
                     .caseInstanceId(caseInstance.getId())
                     .singleResult();
 
-            assertThat(historicQueriedCaseInstance.getCaseVariables()).isEmpty();
+                assertThat(historicQueriedCaseInstance.getCaseVariables()).isEmpty();
 
-            historicQueriedCaseInstance = cmmnHistoryService.createHistoricCaseInstanceQuery()
+                historicQueriedCaseInstance = cmmnHistoryService.createHistoricCaseInstanceQuery()
                     .caseInstanceId(caseInstance.getId())
                     .includeCaseVariables()
                     .singleResult();
-            assertThat(historicQueriedCaseInstance.getCaseVariables()).containsOnly(entries);
+                assertThat(historicQueriedCaseInstance.getCaseVariables()).containsOnly(entries);
+            }
 
             return null;
         });
+
         assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.VARIABLES).containsOnly(entries);
-        assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.HISTORIC_VARIABLES).containsOnly(entries);
+
+        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
+            assertThat(TestQueryCaseInstanceWithIncludeVariablesDelegate.HISTORIC_VARIABLES).containsOnly(entries);
+        }
     }
 }

@@ -56,19 +56,15 @@ public class SentryOnPartAssociationsConverterTest extends AbstractConverterTest
     @Override
     protected void validateModel(CmmnModel model) {
         List<Association> associations = model.getAssociations();
-        assertThat(associations).isNotNull();
         assertThat(associations).hasSize(5);
 
         Map<String, List<Association>> byRelationShip = associations.stream()
                 .collect(Collectors.groupingBy(a -> buildAssociationString(model, a)));
 
-        assertThat(byRelationShip).hasSize(5);
-        assertThat(byRelationShip.containsKey("taskA|taskC|complete")).isTrue();
-        assertThat(byRelationShip.containsKey("taskB|taskC|complete")).isTrue();
-        assertThat(byRelationShip.containsKey("stage1|stage2|terminate")).isTrue();
-        //EXIT CRITERIA ARE "READ" BACKWARDS
-        assertThat(byRelationShip.containsKey("timedTask|expireTimer|occur")).isTrue();
-        assertThat(byRelationShip.containsKey("stage2|abortStageTask|complete")).isTrue();
+        assertThat(byRelationShip)
+                .containsOnlyKeys("taskA|taskC|complete", "taskB|taskC|complete", "stage1|stage2|terminate",
+                        //EXIT CRITERIA ARE "READ" BACKWARDS
+                        "timedTask|expireTimer|occur", "stage2|abortStageTask|complete");
 
         //Coordinates of associations are recalculated based on other elements?
         //This is only a stub that checks the "approximate" coordinates of 1 association
@@ -90,14 +86,12 @@ public class SentryOnPartAssociationsConverterTest extends AbstractConverterTest
         PlanItem taskBIntance = model.findPlanItem(taskC.getPlanItemRef());
         assertThat(taskBIntance).isNotNull();
         List<Criterion> taskCEntryCriterions = taskBIntance.getEntryCriteria();
-        assertThat(taskCEntryCriterions).isNotNull();
-        assertThat(taskCEntryCriterions).hasSize(1);
+         assertThat(taskCEntryCriterions).hasSize(1);
         Criterion criterion = taskCEntryCriterions.get(0);
         assertThat(criterion.getId()).isEqualTo("taskCEntrySentry");
         Sentry sentry = criterion.getSentry();
         assertThat(sentry).isNotNull();
         List<SentryOnPart> onParts = sentry.getOnParts();
-        assertThat(onParts).isNotNull();
         assertThat(onParts).hasSize(2);
         SentryOnPart sentryOnPart = onParts.get(0);
         assertThat(sentryOnPart.getSource().getDefinitionRef()).isEqualTo("taskA");
@@ -113,7 +107,6 @@ public class SentryOnPartAssociationsConverterTest extends AbstractConverterTest
         assertThat(stage2Instance).isNotNull();
         //Stage 2 Entry Sentry
         List<Criterion> stage2EntryCriterions = stage2Instance.getEntryCriteria();
-        assertThat(stage2EntryCriterions).isNotNull();
         assertThat(stage2EntryCriterions).hasSize(1);
         criterion = stage2EntryCriterions.get(0);
         assertThat(criterion.getId()).isEqualTo("stage1EntrySentry");
@@ -128,7 +121,6 @@ public class SentryOnPartAssociationsConverterTest extends AbstractConverterTest
 
         //Stage 2 Exit Sentry
         List<Criterion> stage2ExitCriterions = stage2Instance.getExitCriteria();
-        assertThat(stage2ExitCriterions).isNotNull();
         assertThat(stage2ExitCriterions).hasSize(1);
         criterion = stage2ExitCriterions.get(0);
         assertThat(criterion.getId()).isEqualTo("stage2ExitSentry");
@@ -147,7 +139,6 @@ public class SentryOnPartAssociationsConverterTest extends AbstractConverterTest
         PlanItem timedtaskInstance = model.findPlanItem(timedTask.getPlanItemRef());
         assertThat(timedtaskInstance).isNotNull();
         List<Criterion> timedTaskExitCriterions = timedtaskInstance.getExitCriteria();
-        assertThat(timedTaskExitCriterions).isNotNull();
         assertThat(timedTaskExitCriterions).hasSize(1);
         criterion = timedTaskExitCriterions.get(0);
         assertThat(criterion.getId()).isEqualTo("timedTaskExitSentry");

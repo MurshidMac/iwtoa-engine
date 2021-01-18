@@ -12,8 +12,6 @@
  */
 package org.flowable.cmmn.engine.impl.agenda.operation;
 
-import java.util.Map;
-
 import org.flowable.cmmn.api.runtime.PlanItemInstanceState;
 import org.flowable.cmmn.engine.impl.behavior.CmmnActivityBehavior;
 import org.flowable.cmmn.engine.impl.behavior.CmmnActivityWithMigrationContextBehavior;
@@ -54,12 +52,12 @@ public class StartPlanItemInstanceOperation extends AbstractChangePlanItemInstan
     }
     
     @Override
-    protected String getNewState() {
+    public String getNewState() {
         return PlanItemInstanceState.ACTIVE;
     }
     
     @Override
-    protected String getLifeCycleTransition() {
+    public String getLifeCycleTransition() {
         return PlanItemTransition.START;
     }
     
@@ -70,8 +68,8 @@ public class StartPlanItemInstanceOperation extends AbstractChangePlanItemInstan
 
         planItemInstanceEntity.setEntryCriterionId(entryCriterionId);
         planItemInstanceEntity.setLastStartedTime(getCurrentTime(commandContext));
-        CommandContextUtil.getCmmnHistoryManager(commandContext).recordPlanItemInstanceStarted(planItemInstanceEntity);
         executeActivityBehavior();
+        CommandContextUtil.getCmmnHistoryManager(commandContext).recordPlanItemInstanceStarted(planItemInstanceEntity);
     }
 
     protected void executeActivityBehavior() {
@@ -91,7 +89,7 @@ public class StartPlanItemInstanceOperation extends AbstractChangePlanItemInstan
     }
 
     @Override
-    protected String getOperationName() {
+    public String getOperationName() {
         return "[Start plan item]";
     }
     

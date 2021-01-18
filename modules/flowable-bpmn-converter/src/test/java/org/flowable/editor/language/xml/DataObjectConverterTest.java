@@ -24,34 +24,16 @@ import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.SubProcess;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.bpmn.model.ValuedDataObject;
-import org.junit.Test;
+import org.flowable.editor.language.xml.util.BpmnXmlConverterTest;
 
 /**
  * @see <a href="https://activiti.atlassian.net/browse/ACT-1847">https://activiti.atlassian.net/browse/ACT-1847</a>
  */
-public class DataObjectConverterTest extends AbstractConverterTest {
+class DataObjectConverterTest {
 
-    @Test
-    public void convertXMLToModel() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        validateModel(bpmnModel);
-    }
-
-    @Test
-    public void convertModelToXML() throws Exception {
-        BpmnModel bpmnModel = readXMLFile();
-        BpmnModel parsedModel = exportAndReadXMLFile(bpmnModel);
-        validateModel(parsedModel);
-    }
-
-    @Override
-    protected String getResource() {
-        return "dataobjectmodel.bpmn";
-    }
-
-    private void validateModel(BpmnModel model) {
+    @BpmnXmlConverterTest("dataobjectmodel.bpmn")
+    void validateModel(BpmnModel model) {
         FlowElement flowElement = model.getMainProcess().getFlowElement("start1");
-        assertThat(flowElement).isNotNull();
         assertThat(flowElement).isInstanceOf(StartEvent.class);
         assertThat(flowElement.getId()).isEqualTo("start1");
 
@@ -98,14 +80,12 @@ public class DataObjectConverterTest extends AbstractConverterTest {
         assertThat(dataObj.getItemSubjectRef().getStructureRef()).isEqualTo("xsd:string");
 
         flowElement = model.getMainProcess().getFlowElement("userTask1");
-        assertThat(flowElement).isNotNull();
         assertThat(flowElement).isInstanceOf(UserTask.class);
         assertThat(flowElement.getId()).isEqualTo("userTask1");
         UserTask userTask = (UserTask) flowElement;
         assertThat(userTask.getAssignee()).isEqualTo("kermit");
 
         flowElement = model.getMainProcess().getFlowElement("subprocess1");
-        assertThat(flowElement).isNotNull();
         assertThat(flowElement).isInstanceOf(SubProcess.class);
         assertThat(flowElement.getId()).isEqualTo("subprocess1");
         SubProcess subProcess = (SubProcess) flowElement;

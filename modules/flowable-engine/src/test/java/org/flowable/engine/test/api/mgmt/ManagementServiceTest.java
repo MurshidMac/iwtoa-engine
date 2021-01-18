@@ -17,14 +17,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.engine.api.management.TableMetaData;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.common.engine.impl.lock.LockManager;
+import org.flowable.common.engine.impl.persistence.entity.PropertyEntity;
+import org.flowable.common.engine.impl.persistence.entity.PropertyEntityManager;
 import org.flowable.engine.impl.ProcessEngineImpl;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.impl.util.CommandContextUtil;
@@ -33,6 +38,8 @@ import org.flowable.engine.test.Deployment;
 import org.flowable.eventsubscription.service.impl.persistence.entity.EventSubscriptionEntity;
 import org.flowable.job.api.Job;
 import org.flowable.job.api.JobNotFoundException;
+import org.flowable.job.service.JobService;
+import org.flowable.job.service.TimerJobService;
 import org.flowable.job.service.impl.cmd.AcquireJobsCmd;
 import org.flowable.job.service.impl.cmd.AcquireTimerJobsCmd;
 import org.flowable.job.service.impl.persistence.entity.DeadLetterJobEntity;
@@ -40,6 +47,7 @@ import org.flowable.job.service.impl.persistence.entity.ExternalWorkerJobEntity;
 import org.flowable.job.service.impl.persistence.entity.JobEntity;
 import org.flowable.job.service.impl.persistence.entity.SuspendedJobEntity;
 import org.flowable.job.service.impl.persistence.entity.TimerJobEntity;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -99,13 +107,11 @@ public class ManagementServiceTest extends PluggableFlowableTestCase {
         Job timerJob2 = managementService.createTimerJobQuery().processInstanceId(processInstance.getId()).singleResult();
 
         assertThat(timerJob2).isNotNull();
-        assertThat(timerJob2.getExceptionMessage()).isNotNull();
         assertThat(timerJob2.getExceptionMessage())
                 .contains("This is an exception thrown from scriptTask");
 
         // Get the full stacktrace using the managementService
         String exceptionStack = managementService.getTimerJobExceptionStacktrace(timerJob2.getId());
-        assertThat(exceptionStack).isNotNull();
         assertThat(exceptionStack)
                 .contains("This is an exception thrown from scriptTask");
     }
@@ -340,33 +346,43 @@ public class ManagementServiceTest extends PluggableFlowableTestCase {
     @Test
     void testAcquireAlreadyAcquiredLock() {
         String lockName = "testLock";
-        LockManager testLockManager1 = managementService.getLockManager(lockName);
+        try {
+            LockManager testLockManager1 = managementService.getLockManager(lockName);
 
-        assertThat(testLockManager1.acquireLock()).isTrue();
-        // acquiring the lock from the same lock manager should always return true
-        assertThat(testLockManager1.acquireLock()).isTrue();
-        assertThat(managementService.getProperties()).containsKey(lockName);
+            assertThat(testLockManager1.acquireLock()).isTrue();
+            // acquiring the lock from the same lock manager should always return true
+            assertThat(testLockManager1.acquireLock()).isTrue();
+            Map<String, String> properties = managementService.getProperties();
+            assertThat(properties).containsKey(lockName);
+            assertThat(properties.get(lockName)).isNotNull();
 
-        LockManager testLockManager2 = managementService.getLockManager(lockName);
-        assertThat(testLockManager2.acquireLock()).isFalse();
+            LockManager testLockManager2 = managementService.getLockManager(lockName);
+            assertThat(testLockManager2.acquireLock()).isFalse();
 
-        testLockManager1.releaseLock();
-        assertThat(managementService.getProperties()).doesNotContainKey(lockName);
+            testLockManager1.releaseLock();
+            properties = managementService.getProperties();
+            assertThat(properties).containsEntry(lockName, null);
 
-        assertThat(testLockManager2.acquireLock()).isTrue();
-        assertThat(testLockManager1.acquireLock()).isFalse();
+            assertThat(testLockManager2.acquireLock()).isTrue();
+            assertThat(testLockManager1.acquireLock()).isFalse();
 
-        assertThat(managementService.getProperties()).containsKey(lockName);
-        testLockManager2.releaseLock();
-        assertThat(managementService.getProperties()).doesNotContainKey(lockName);
+            properties = managementService.getProperties();
+            assertThat(properties).containsKey(lockName);
+            assertThat(properties.get(lockName)).isNotNull();
+            testLockManager2.releaseLock();
+            properties = managementService.getProperties();
+            assertThat(properties).containsEntry(lockName, null);
+        } finally {
+            deletePropertyIfExists(lockName);
+        }
     }
 
     @Test
     void testWaitForLock() {
         Duration initialLockPollRate = processEngineConfiguration.getLockPollRate();
+        String lockName = "testWaitForLock";
         try {
             processEngineConfiguration.setLockPollRate(Duration.ofMillis(100));
-            String lockName = "testWaitForLock";
             LockManager testLockManager1 = managementService.getLockManager(lockName);
 
             testLockManager1.waitForLock(Duration.ofMillis(100));
@@ -383,51 +399,55 @@ public class ManagementServiceTest extends PluggableFlowableTestCase {
             testLockManager2.waitForLock(Duration.ofSeconds(1));
             assertThat(testLockManager2.acquireLock()).isTrue();
             testLockManager2.releaseLock();
-            assertThat(managementService.getProperties()).doesNotContainKey(lockName);
+            assertThat(managementService.getProperties())
+                    .containsEntry(lockName, null);
         } finally {
             processEngineConfiguration.setLockPollRate(initialLockPollRate);
+            deletePropertyIfExists(lockName);
         }
     }
 
     @Test
     void testFindJobByCorrelationId() {
         Job asyncJob = managementService.executeCommand(context -> {
-            JobEntity job = CommandContextUtil.getJobService(context).createJob();
+            JobService jobService = CommandContextUtil.getJobService(context);
+            JobEntity job = jobService.createJob();
             job.setJobType("testAsync");
-            CommandContextUtil.getJobService(context).insertJob(job);
+            jobService.insertJob(job);
             return job;
         });
 
         Job timerJob = managementService.executeCommand(context -> {
-            TimerJobEntity job = CommandContextUtil.getTimerJobService(context).createTimerJob();
+            TimerJobService timerJobService = CommandContextUtil.getTimerJobService(context);
+            TimerJobEntity job = timerJobService.createTimerJob();
             job.setJobType("testTimer");
-            CommandContextUtil.getTimerJobService(context).insertTimerJob(job);
+            timerJobService.insertTimerJob(job);
             return job;
         });
 
         Job deadLetterJob = managementService.executeCommand(context -> {
-            DeadLetterJobEntity job = CommandContextUtil.getJobService(context).createDeadLetterJob();
+            JobService jobService = CommandContextUtil.getJobService(context);
+            DeadLetterJobEntity job = jobService.createDeadLetterJob();
             job.setJobType("testDeadLetter");
-            CommandContextUtil.getJobService(context).insertDeadLetterJob(job);
+            jobService.insertDeadLetterJob(job);
             return job;
         });
 
         Job suspendedJob = managementService.executeCommand(context -> {
-            SuspendedJobEntity job = CommandContextUtil.getJobServiceConfiguration(context)
+            SuspendedJobEntity job = processEngineConfiguration.getJobServiceConfiguration()
                     .getSuspendedJobEntityManager()
                     .create();
             job.setJobType("testSuspended");
-            CommandContextUtil.getJobServiceConfiguration(context)
-                    .getSuspendedJobEntityManager()
-                    .insert(job);
+            processEngineConfiguration.getJobServiceConfiguration().getSuspendedJobEntityManager().insert(job);
             return job;
         });
 
 
         Job externalWorkerJob = managementService.executeCommand(context -> {
-            ExternalWorkerJobEntity job = CommandContextUtil.getJobService(context).createExternalWorkerJob();
+            JobService jobService = CommandContextUtil.getJobService(context);
+            ExternalWorkerJobEntity job = jobService.createExternalWorkerJob();
             job.setJobType("testExternal");
-            CommandContextUtil.getJobService(context).insertExternalWorkerJob(job);
+            jobService.insertExternalWorkerJob(job);
             return job;
         });
 
@@ -465,4 +485,37 @@ public class ManagementServiceTest extends PluggableFlowableTestCase {
         managementService.deleteSuspendedJob(suspendedJob.getId());
         managementService.deleteExternalWorkerJob(externalWorkerJob.getId());
     }
+
+    @Test
+    void testMoveDeadLetterJobToInvalidHistoryJob() {
+        for (String jobType : Arrays.asList(JobEntity.JOB_TYPE_MESSAGE, JobEntity.JOB_TYPE_TIMER, JobEntity.JOB_TYPE_EXTERNAL_WORKER)) {
+            Job deadLetterJob = managementService.executeCommand(context -> {
+                JobService jobService = CommandContextUtil.getProcessEngineConfiguration(context).getJobServiceConfiguration().getJobService();
+                DeadLetterJobEntity job = jobService.createDeadLetterJob();
+                job.setJobType(jobType);
+                jobService.insertDeadLetterJob(job);
+                return job;
+            });
+
+            try {
+                managementService.moveDeadLetterJobToHistoryJob(deadLetterJob.getId(), 3);
+                Assert.fail();
+            } catch (FlowableIllegalArgumentException e) { }
+
+            managementService.deleteDeadLetterJob(deadLetterJob.getId());
+        }
+
+    }
+
+    protected void deletePropertyIfExists(String propertyName) {
+        managementService.executeCommand(commandContext -> {
+            PropertyEntityManager propertyEntityManager = CommandContextUtil.getPropertyEntityManager(commandContext);
+            PropertyEntity property = propertyEntityManager.findById(propertyName);
+            if (property != null) {
+                propertyEntityManager.delete(property);
+            }
+            return null;
+        });
+    }
+
 }

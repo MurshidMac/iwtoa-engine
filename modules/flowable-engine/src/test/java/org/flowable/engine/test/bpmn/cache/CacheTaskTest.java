@@ -45,10 +45,8 @@ public class CacheTaskTest extends PluggableFlowableTestCase {
     public void testProcessInstanceAndExecutionIdInCache() {
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("startToEnd");
 
-        assertThat(ServiceCacheTask.processInstanceId).isNotNull();
         assertThat(ServiceCacheTask.processInstanceId).isEqualTo(processInstance.getId());
         assertThat(ServiceCacheTask.executionId).isNotNull();
-        assertThat(ServiceCacheTask.historicProcessInstanceId).isNotNull();
         assertThat(ServiceCacheTask.historicProcessInstanceId).isEqualTo(processInstance.getId());
     }
 
@@ -59,9 +57,7 @@ public class CacheTaskTest extends PluggableFlowableTestCase {
         Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(task).isNotNull();
 
-        assertThat(TestCacheTaskListener.TASK_ID).isNotNull();
         assertThat(TestCacheTaskListener.TASK_ID).isEqualTo(task.getId());
-        assertThat(TestCacheTaskListener.HISTORIC_TASK_ID).isNotNull();
         assertThat(TestCacheTaskListener.HISTORIC_TASK_ID).isEqualTo(task.getId());
     }
 
@@ -147,7 +143,7 @@ public class CacheTaskTest extends PluggableFlowableTestCase {
         managementService.executeCommand(commandContext -> {
             // Make sure that it is loaded in the cache
             String taskId = TestCacheTaskListener.TASK_ID;
-            Task queriedTask = CommandContextUtil.getTaskService(commandContext).getTask(taskId);
+            Task queriedTask = processEngineConfiguration.getTaskServiceConfiguration().getTaskService().getTask(taskId);
             assertThat(queriedTask.getProcessVariables()).isEmpty();
             assertThat(queriedTask.getTaskLocalVariables()).isEmpty();
 
@@ -162,7 +158,7 @@ public class CacheTaskTest extends PluggableFlowableTestCase {
             assertThat(queriedTask.getTaskLocalVariables()).containsOnly(entry("localVar", "localValue"));
 
             // Make sure that it is loaded in the cache
-            HistoricTaskInstance queriedHistoricTask = CommandContextUtil.getHistoricTaskService(commandContext).getHistoricTask(taskId);
+            HistoricTaskInstance queriedHistoricTask = processEngineConfiguration.getTaskServiceConfiguration().getHistoricTaskService().getHistoricTask(taskId);
             assertThat(queriedHistoricTask.getProcessVariables()).isEmpty();
             assertThat(queriedHistoricTask.getTaskLocalVariables()).isEmpty();
 

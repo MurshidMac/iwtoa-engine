@@ -26,6 +26,7 @@ import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.model.PlanItem;
 import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.context.Context;
+import org.flowable.variable.service.VariableServiceConfiguration;
 import org.flowable.variable.service.impl.persistence.entity.VariableInitializingList;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableScopeImpl;
@@ -151,13 +152,13 @@ public class CaseInstanceEntityImpl extends AbstractCmmnEngineVariableScopeEntit
         this.completable = completable;
     }
     /**
-     * Only here due to MyBatis and the old typo -> can be removed, if we would do a DB update
+     * Only here due to MyBatis and the old typo can be removed, if we would do a DB update
      */
     public boolean isCompleteable() {
         return completable;
     }
     /**
-     * Only here due to MyBatis and the old typo -> can be removed, if we would do a DB update
+     * Only here due to MyBatis and the old typo can be removed, if we would do a DB update
      */
     public void setCompleteable(boolean completable) {
         this.completable = completable;
@@ -261,13 +262,14 @@ public class CaseInstanceEntityImpl extends AbstractCmmnEngineVariableScopeEntit
 
     @Override
     protected Collection<VariableInstanceEntity> loadVariableInstances() {
-        return CommandContextUtil.getVariableService().findVariableInstanceByScopeIdAndScopeType(id, ScopeTypes.CMMN);
+        return getVariableServiceConfiguration().getVariableService()
+                .findVariableInstanceByScopeIdAndScopeType(id, ScopeTypes.CMMN);
     }
 
     @Override
     protected VariableScopeImpl getParentVariableScope() {
         // A case instance is the root of variables.
-        // In case of parent-child case instances, the variables needs to be defined explictely in input/outpur vars 
+        // In case of parent-child case instances, the variables needs to be defined explicitly in input/output vars
         return null;
     }
 
@@ -276,7 +278,7 @@ public class CaseInstanceEntityImpl extends AbstractCmmnEngineVariableScopeEntit
         variableInstance.setScopeId(id);
         variableInstance.setScopeType(ScopeTypes.CMMN);
     }
-    
+
     @Override
     protected void addLoggingSessionInfo(ObjectNode loggingNode) {
         CmmnLoggingSessionUtil.fillLoggingData(loggingNode, this);
@@ -284,7 +286,7 @@ public class CaseInstanceEntityImpl extends AbstractCmmnEngineVariableScopeEntit
 
     @Override
     protected VariableInstanceEntity getSpecificVariable(String variableName) {
-        return CommandContextUtil.getVariableService()
+        return getVariableServiceConfiguration().getVariableService()
                 .createInternalVariableInstanceQuery()
                 .scopeId(id)
                 .withoutSubScopeId()
@@ -295,7 +297,7 @@ public class CaseInstanceEntityImpl extends AbstractCmmnEngineVariableScopeEntit
 
     @Override
     protected List<VariableInstanceEntity> getSpecificVariables(Collection<String> variableNames) {
-        return CommandContextUtil.getVariableService()
+        return getVariableServiceConfiguration().getVariableService()
                 .createInternalVariableInstanceQuery()
                 .scopeId(id)
                 .withoutSubScopeId()
@@ -307,6 +309,11 @@ public class CaseInstanceEntityImpl extends AbstractCmmnEngineVariableScopeEntit
     @Override
     protected boolean isPropagateToHistoricVariable() {
         return true;
+    }
+
+    @Override
+    protected VariableServiceConfiguration getVariableServiceConfiguration() {
+        return CommandContextUtil.getCmmnEngineConfiguration().getVariableServiceConfiguration();
     }
 
     @Override

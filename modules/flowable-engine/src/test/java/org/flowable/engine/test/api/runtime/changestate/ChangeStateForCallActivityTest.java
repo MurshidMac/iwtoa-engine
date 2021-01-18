@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.scope.ScopeTypes;
+import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -29,6 +31,7 @@ import org.flowable.entitylink.api.EntityLink;
 import org.flowable.entitylink.api.EntityLinkType;
 import org.flowable.entitylink.api.HierarchyType;
 import org.flowable.task.api.Task;
+import org.flowable.task.api.history.HistoricTaskInstance;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,8 +78,8 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(task.getTaskDefinitionKey()).isEqualTo("secondTask");
 
-        assertThat(runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).count()).isEqualTo(0);
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).count()).isZero();
+        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isZero();
 
         List<Execution> executions = runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).onlyChildExecutions().list();
         assertThat(executions).hasSize(1);
@@ -112,8 +115,13 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(task.getTaskDefinitionKey()).isEqualTo("secondTask");
 
-        assertThat(runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).count()).isEqualTo(0);
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(0);
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
+            HistoricTaskInstance historicTaskInstance = historyService.createHistoricTaskInstanceQuery().taskId(task.getId()).singleResult();
+            assertThat(historicTaskInstance.getTaskDefinitionKey()).isEqualTo("secondTask");
+        }
+
+        assertThat(runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).count()).isZero();
+        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isZero();
 
         List<Execution> executions = runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).onlyChildExecutions().list();
         assertThat(executions).hasSize(1);
@@ -138,7 +146,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         ProcessInstance subProcessInstance = runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).singleResult();
         assertThat(subProcessInstance).isNotNull();
 
-        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isZero();
         assertThat(taskService.createTaskQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(1);
 
         assertThat(runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).onlyChildExecutions().count()).isEqualTo(1);
@@ -148,7 +156,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         assertThat(task.getTaskDefinitionKey()).isEqualTo("theTask");
         taskService.complete(task.getId());
 
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isZero();
 
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(task.getTaskDefinitionKey()).isEqualTo("secondTask");
@@ -187,7 +195,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         ProcessInstance subProcessInstance = runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).singleResult();
         assertThat(subProcessInstance).isNotNull();
 
-        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isZero();
         assertThat(taskService.createTaskQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(1);
 
         assertThat(runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).onlyChildExecutions().count()).isEqualTo(1);
@@ -195,6 +203,11 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
 
         Task firstSecondTask = taskService.createTaskQuery().processInstanceId(subProcessInstance.getId()).singleResult();
         assertThat(firstSecondTask.getTaskDefinitionKey()).isEqualTo("secondTask");
+
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
+            HistoricTaskInstance historicTaskInstance = historyService.createHistoricTaskInstanceQuery().taskId(firstSecondTask.getId()).singleResult();
+            assertThat(historicTaskInstance.getTaskDefinitionKey()).isEqualTo("secondTask");
+        }
 
         assertThat(runtimeService.getEntityLinkChildrenForProcessInstance(processInstance.getId()))
                 .extracting(EntityLink::getHierarchyType, EntityLink::getReferenceScopeId,
@@ -228,7 +241,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
 
         taskService.complete(firstSecondTask.getId());
 
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isZero();
 
         Task secondTask = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(secondTask.getTaskDefinitionKey()).isEqualTo("secondTask");
@@ -268,7 +281,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         ProcessInstance subProcessInstance = runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).singleResult();
         assertThat(subProcessInstance).isNotNull();
 
-        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isZero();
         assertThat(taskService.createTaskQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(1);
 
         assertThat(runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).onlyChildExecutions().count()).isEqualTo(1);
@@ -278,7 +291,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         assertThat(task.getTaskDefinitionKey()).isEqualTo("theTask");
         taskService.complete(task.getId());
 
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isZero();
 
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(task.getTaskDefinitionKey()).isEqualTo("lastTask");
@@ -325,7 +338,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         ProcessInstance subProcessInstance = runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getId()).singleResult();
         assertThat(subProcessInstance).isNotNull();
 
-        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isEqualTo(0);
+        assertThat(taskService.createTaskQuery().processInstanceId(processInstance.getId()).count()).isZero();
         assertThat(taskService.createTaskQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(1);
 
         assertThat(runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).onlyChildExecutions().count()).isEqualTo(1);
@@ -335,7 +348,7 @@ public class ChangeStateForCallActivityTest extends PluggableFlowableTestCase {
         assertThat(task.getTaskDefinitionKey()).isEqualTo("theTask");
         taskService.complete(task.getId());
 
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isEqualTo(0);
+        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(subProcessInstance.getId()).count()).isZero();
 
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertThat(task.getTaskDefinitionKey()).isEqualTo("secondTask");

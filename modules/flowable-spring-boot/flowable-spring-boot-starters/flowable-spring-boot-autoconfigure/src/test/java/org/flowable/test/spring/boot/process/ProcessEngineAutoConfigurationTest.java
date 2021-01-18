@@ -33,18 +33,24 @@ import org.flowable.app.api.repository.AppDeployment;
 import org.flowable.app.engine.AppEngine;
 import org.flowable.app.engine.AppEngineConfiguration;
 import org.flowable.app.spring.SpringAppEngineConfiguration;
+import org.flowable.common.engine.api.async.AsyncTaskExecutor;
 import org.flowable.common.engine.impl.cfg.IdGenerator;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.common.engine.impl.persistence.StrongUuidGenerator;
 import org.flowable.common.spring.AutoDeploymentStrategy;
+import org.flowable.common.spring.async.SpringAsyncTaskExecutor;
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.cfg.HttpClientConfig;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.db.DbIdGenerator;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.http.common.api.client.FlowableAsyncHttpClient;
+import org.flowable.http.common.api.client.FlowableHttpClient;
 import org.flowable.idm.spring.SpringIdmEngineConfiguration;
+import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
@@ -57,11 +63,14 @@ import org.flowable.spring.boot.process.Process;
 import org.flowable.spring.configurator.DefaultAutoDeploymentStrategy;
 import org.flowable.spring.configurator.ResourceParentFolderAutoDeploymentStrategy;
 import org.flowable.spring.configurator.SingleResourceAutoDeploymentStrategy;
+import org.flowable.spring.job.service.SpringAsyncExecutor;
+import org.flowable.spring.job.service.SpringAsyncHistoryExecutor;
 import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -70,6 +79,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
+import org.springframework.core.task.TaskExecutor;
 
 /**
  * @author Filip Hrisafov
@@ -97,6 +107,7 @@ public class ProcessEngineAutoConfigurationTest {
             "flowable.http.requestRetryLimit=1",
             "flowable.http.disableCertVerify=true"
         ).run(context -> {
+            assertThat(context).doesNotHaveBean(FlowableHttpClient.class);
             ProcessEngine processEngine = context.getBean(ProcessEngine.class);
             HttpClientConfig httpClientConfig = processEngine.getProcessEngineConfiguration().getHttpClientConfig();
 
@@ -106,6 +117,7 @@ public class ProcessEngineAutoConfigurationTest {
             assertThat(httpClientConfig.getConnectionRequestTimeout()).isEqualTo(1000);
             assertThat(httpClientConfig.getRequestRetryLimit()).isEqualTo(1);
             assertThat(httpClientConfig.isDisableCertVerify()).isTrue();
+            assertThat(httpClientConfig.getHttpClient()).isNull();
 
             deleteDeployments(processEngine);
         });
@@ -114,11 +126,11 @@ public class ProcessEngineAutoConfigurationTest {
     @Test
     public void standaloneProcessEngineWithBasicDatasource() {
         contextRunner.run(context -> {
-            assertThat(context).as("Process engine").hasSingleBean(ProcessEngine.class);
-            assertThat(context)
-                .doesNotHaveBean(AppEngine.class)
-                .doesNotHaveBean(IdGenerator.class)
-                .doesNotHaveBean("processAppEngineConfigurationConfigurer");
+            assertThat(context).as("Process engine")
+                    .hasSingleBean(ProcessEngine.class)
+                    .doesNotHaveBean(AppEngine.class)
+                    .doesNotHaveBean(IdGenerator.class)
+                    .doesNotHaveBean("processAppEngineConfigurationConfigurer");
 
             ProcessEngine processEngine = context.getBean(ProcessEngine.class);
 
@@ -179,11 +191,11 @@ public class ProcessEngineAutoConfigurationTest {
                 "flowable.auto-deployment.engine.bpmn.lock-name=testLock"
             )
             .run(context -> {
-                assertThat(context).as("Process engine").hasSingleBean(ProcessEngine.class);
-                assertThat(context)
-                    .doesNotHaveBean(AppEngine.class)
-                    .doesNotHaveBean(IdGenerator.class)
-                    .doesNotHaveBean("processAppEngineConfigurationConfigurer");
+                assertThat(context).as("Process engine")
+                        .hasSingleBean(ProcessEngine.class)
+                        .doesNotHaveBean(AppEngine.class)
+                        .doesNotHaveBean(IdGenerator.class)
+                        .doesNotHaveBean("processAppEngineConfigurationConfigurer");
 
                 ProcessEngine processEngine = context.getBean(ProcessEngine.class);
 
@@ -439,9 +451,65 @@ public class ProcessEngineAutoConfigurationTest {
         });
     }
 
+    @Test
+    public void processEngineWithCustomHttpClient() {
+        contextRunner.withUserConfiguration(CustomHttpClientConfiguration.class)
+                .run(context -> {
+                    assertThat(context)
+                            .as("Process engine").hasSingleBean(ProcessEngine.class)
+                            .as("Http Client").hasSingleBean(FlowableHttpClient.class);
+
+                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
+
+                    ProcessEngineConfiguration engineConfiguration = processEngine.getProcessEngineConfiguration();
+                    assertThat(engineConfiguration.getHttpClientConfig().getHttpClient())
+                            .isEqualTo(context.getBean(FlowableHttpClient.class));
+                });
+    }
+
+    @Test
+    public void processEngineWithCustomAsyncHttpClient() {
+        contextRunner.withUserConfiguration(CustomAsyncHttpClientConfiguration.class)
+                .run(context -> {
+                    assertThat(context)
+                            .as("Process engine").hasSingleBean(ProcessEngine.class)
+                            .as("Http Client").hasSingleBean(FlowableAsyncHttpClient.class);
+
+                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
+
+                    ProcessEngineConfiguration engineConfiguration = processEngine.getProcessEngineConfiguration();
+                    assertThat(engineConfiguration.getHttpClientConfig().getHttpClient())
+                            .isEqualTo(context.getBean(FlowableAsyncHttpClient.class));
+                });
+    }
+
+    @Test
+    void processEngineShouldUseSpringTaskExecutor() {
+        contextRunner
+                .withConfiguration(AutoConfigurations.of(TaskExecutionAutoConfiguration.class))
+                .run(context -> {
+                    assertThat(context)
+                            .hasSingleBean(ProcessEngineConfigurationImpl.class)
+                            .hasSingleBean(TaskExecutor.class);
+
+                    ProcessEngineConfigurationImpl configuration = context.getBean(ProcessEngineConfigurationImpl.class);
+
+                    AsyncExecutor asyncExecutor = configuration.getAsyncExecutor();
+                    assertThat(asyncExecutor).isInstanceOf(SpringAsyncExecutor.class);
+
+                    AsyncTaskExecutor asyncTaskExecutor = configuration.getAsyncTaskExecutor();
+                    assertThat(asyncTaskExecutor).isInstanceOf(SpringAsyncTaskExecutor.class);
+                    assertThat(asyncExecutor.getTaskExecutor()).isEqualTo(asyncTaskExecutor);
+                    assertThat(configuration.getAsyncHistoryTaskExecutor()).isEqualTo(asyncTaskExecutor);
+                    assertThat(((SpringAsyncTaskExecutor) asyncTaskExecutor).getAsyncTaskExecutor())
+                            .isEqualTo(context.getBean(TaskExecutor.class));
+                });
+    }
+
+
     private void assertAllServicesPresent(ApplicationContext context, ProcessEngine processEngine) {
         List<Method> methods = Stream.of(ProcessEngine.class.getDeclaredMethods())
-            .filter(method -> !(method.getReturnType().equals(void.class) || method.getName().equals("getName"))).collect(Collectors.toList());
+            .filter(method -> !(method.getReturnType().equals(void.class) || "getName".equals(method.getName()))).collect(Collectors.toList());
 
         assertThat(methods).allSatisfy(method -> {
             try {
@@ -555,6 +623,24 @@ public class ProcessEngineAutoConfigurationTest {
         @Order(10)
         public TestProcessEngineAutoDeploymentStrategy testProcessEngineAutoDeploymentStrategy() {
             return new TestProcessEngineAutoDeploymentStrategy();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class CustomHttpClientConfiguration {
+
+        @Bean
+        public FlowableHttpClient customHttpClient() {
+            return request -> null;
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class CustomAsyncHttpClientConfiguration {
+
+        @Bean
+        public FlowableAsyncHttpClient customAsyncHttpClient() {
+            return request -> null;
         }
     }
 

@@ -12,15 +12,14 @@
  */
 package org.flowable.dmn.xml;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
 import org.flowable.dmn.model.Decision;
 import org.flowable.dmn.model.DecisionTable;
 import org.flowable.dmn.model.DmnDefinition;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EmptyOutcomeConverterTest extends AbstractConverterTest {
 
@@ -44,12 +43,12 @@ public class EmptyOutcomeConverterTest extends AbstractConverterTest {
 
     private void validateModel(DmnDefinition model) {
         List<Decision> decisions = model.getDecisions();
-        assertEquals(1, decisions.size());
+        assertThat(decisions).hasSize(1);
 
         DecisionTable decisionTable = (DecisionTable) decisions.get(0).getExpression();
-        assertNotNull(decisionTable);
+        assertThat(decisionTable).isNotNull();
 
-        assertEquals(2, decisionTable.getRules().get(0).getOutputEntries().size());
-        assertEquals(2, decisionTable.getRules().get(1).getOutputEntries().size());
+        assertThat(decisionTable.getRules().get(0).getOutputEntries()).hasSize(2);
+        assertThat(decisionTable.getRules().get(1).getOutputEntries()).hasSize(2);
     }
 }

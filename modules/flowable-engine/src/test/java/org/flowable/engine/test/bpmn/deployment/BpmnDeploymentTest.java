@@ -66,7 +66,6 @@ public class BpmnDeploymentTest extends PluggableFlowableTestCase {
         // verify content
         InputStream deploymentInputStream = repositoryService.getResourceAsStream(deploymentId, bpmnResourceName);
         String contentFromDeployment = readInputStreamToString(deploymentInputStream);
-        assertThat(contentFromDeployment.length()).isGreaterThan(0);
         assertThat(contentFromDeployment).contains("process id=\"emptyProcess\"");
 
         InputStream fileInputStream = ReflectUtil.getResourceAsStream(
@@ -277,7 +276,7 @@ public class BpmnDeploymentTest extends PluggableFlowableTestCase {
         InputStream diagramStream = repositoryService.getResourceAsStream(deploymentIdFromDeploymentAnnotation,
                 "org/flowable/engine/test/bpmn/deployment/BpmnDeploymentTest.testProcessDiagramResource.jpg");
         byte[] diagramBytes = IoUtil.readInputStream(diagramStream, "diagram stream");
-        assertThat(diagramBytes.length).isEqualTo(33343);
+        assertThat(diagramBytes).hasSize(33343);
     }
 
     @Test

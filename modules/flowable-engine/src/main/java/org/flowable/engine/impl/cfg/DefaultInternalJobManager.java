@@ -170,13 +170,14 @@ public class DefaultInternalJobManager extends ScopeAwareInternalJobManager {
             }
 
             executionEntityManager.updateProcessInstanceLockTime(execution.getProcessInstanceId(), lockOwner, lockExpirationTime);
+
+            if (processEngineConfiguration.isLoggingSessionEnabled()) {
+                FlowElement flowElement = execution.getCurrentFlowElement();
+                BpmnLoggingSessionUtil.addAsyncActivityLoggingData("Locking job for " + flowElement.getId() + ", with job id " + job.getId(),
+                        LoggingSessionConstants.TYPE_SERVICE_TASK_LOCK_JOB, (JobEntity) job, flowElement, execution);
+            }
         }
-        
-        if (processEngineConfiguration.isLoggingSessionEnabled()) {
-            FlowElement flowElement = execution.getCurrentFlowElement();
-            BpmnLoggingSessionUtil.addAsyncActivityLoggingData("Locking job for " + flowElement.getId() + ", with job id " + job.getId(),
-                            LoggingSessionConstants.TYPE_SERVICE_TASK_LOCK_JOB, (JobEntity) job, flowElement, execution);
-        }
+
     }
 
     @Override
@@ -277,7 +278,6 @@ public class DefaultInternalJobManager extends ScopeAwareInternalJobManager {
         int times = Integer.MAX_VALUE;
         List<String> expression = Arrays.asList(originalExpression.split("/"));
         if (expression.size() > 1 && expression.get(0).startsWith("R")) {
-            times = Integer.MAX_VALUE;
             if (expression.get(0).length() > 1) {
                 times = Integer.parseInt(expression.get(0).substring(1));
             }

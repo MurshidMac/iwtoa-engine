@@ -15,7 +15,6 @@ package org.flowable.engine.impl.history.async;
 import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.convertToBase64;
 import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.putIfNotNull;
 
-import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.history.AbstractHistoryManager;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
@@ -34,8 +33,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public abstract class AbstractAsyncHistoryManager extends AbstractHistoryManager {
 
-    public AbstractAsyncHistoryManager(ProcessEngineConfigurationImpl processEngineConfiguration, HistoryLevel historyLevel, boolean usePrefixId) {
-        super(processEngineConfiguration, historyLevel, usePrefixId);
+    public AbstractAsyncHistoryManager(ProcessEngineConfigurationImpl processEngineConfiguration) {
+        super(processEngineConfiguration);
     }
 
     protected void addCommonProcessInstanceFields(ExecutionEntity processInstance, ObjectNode data) {
@@ -53,6 +52,7 @@ public abstract class AbstractAsyncHistoryManager extends AbstractHistoryManager
         putIfNotNull(data, HistoryJsonConstants.CALLBACK_TYPE, processInstance.getCallbackType());
         putIfNotNull(data, HistoryJsonConstants.REFERENCE_ID, processInstance.getReferenceId());
         putIfNotNull(data, HistoryJsonConstants.REFERENCE_TYPE, processInstance.getReferenceType());
+        putIfNotNull(data, HistoryJsonConstants.PROPAGATED_STAGE_INSTANCE_ID, processInstance.getPropagatedStageInstanceId());
         putIfNotNull(data, HistoryJsonConstants.TENANT_ID, processInstance.getTenantId());
 
         addProcessDefinitionFields(data, processInstance.getProcessDefinitionId());
@@ -153,8 +153,10 @@ public abstract class AbstractAsyncHistoryManager extends AbstractHistoryManager
         putIfNotNull(data, HistoryJsonConstants.ENTITY_LINK_TYPE, entityLink.getLinkType());
         putIfNotNull(data, HistoryJsonConstants.CREATE_TIME, entityLink.getCreateTime());
         putIfNotNull(data, HistoryJsonConstants.SCOPE_ID, entityLink.getScopeId());
+        putIfNotNull(data, HistoryJsonConstants.SUB_SCOPE_ID, entityLink.getSubScopeId());
         putIfNotNull(data, HistoryJsonConstants.SCOPE_TYPE, entityLink.getScopeType());
         putIfNotNull(data, HistoryJsonConstants.SCOPE_DEFINITION_ID, entityLink.getScopeDefinitionId());
+        putIfNotNull(data, HistoryJsonConstants.PARENT_ELEMENT_ID, entityLink.getParentElementId());
         putIfNotNull(data, HistoryJsonConstants.REF_SCOPE_ID, entityLink.getReferenceScopeId());
         putIfNotNull(data, HistoryJsonConstants.REF_SCOPE_TYPE, entityLink.getReferenceScopeType());
         putIfNotNull(data, HistoryJsonConstants.REF_SCOPE_DEFINITION_ID, entityLink.getReferenceScopeDefinitionId());
