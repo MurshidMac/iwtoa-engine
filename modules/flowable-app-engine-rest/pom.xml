@@ -210,7 +210,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-http</artifactId>
-            <version>9.4.35.v20201120</version>
+            <version>9.4.48.v20220622</version>
             <scope>test</scope>
         </dependency>
         <dependency>
